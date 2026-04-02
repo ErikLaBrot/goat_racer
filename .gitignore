@@ -1,5 +1,6 @@
 /goat_ws/build/
 /goat_ws/install/
 /goat_ws/log/
+/log/
 /.vscode/
 __pycache__/

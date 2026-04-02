@@ -83,14 +83,14 @@ case "$command" in
     ensure_running
     trap cleanup_container EXIT
     run_in_container \
-      "set -eo pipefail; source /opt/ros/humble/setup.bash; set -u; cd '$workspace_dir'; colcon build --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --log-base '$build_root/log' --event-handlers console_direct+ \"\$@\"" \
+      "set -eo pipefail; source /opt/ros/humble/setup.bash; set -u; cd '$workspace_dir'; colcon --log-base '$build_root/log' build --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+ \"\$@\"" \
       "$@"
     ;;
   test)
     ensure_running
     trap cleanup_container EXIT
     run_in_container \
-      "set -eo pipefail; source /opt/ros/humble/setup.bash; cd '$workspace_dir'; colcon build --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --log-base '$build_root/log' --event-handlers console_direct+; source '$build_root/install/setup.bash'; set -u; colcon test --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --log-base '$build_root/log' --event-handlers console_direct+ --return-code-on-test-failure \"\$@\"; colcon test-result --test-result-base '$build_root/build' --verbose" \
+      "set -eo pipefail; source /opt/ros/humble/setup.bash; cd '$workspace_dir'; colcon --log-base '$build_root/log' build --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+; source '$build_root/install/setup.bash'; set -u; colcon --log-base '$build_root/log' test --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+ --return-code-on-test-failure \"\$@\"; colcon test-result --test-result-base '$build_root/build' --verbose" \
       "$@"
     ;;
   *)
