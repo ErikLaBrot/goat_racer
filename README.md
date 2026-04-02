@@ -8,6 +8,12 @@ orchestration, and the canonical `.repos` manifest for component checkouts.
 
 - `docker/`
   Development container definitions.
+- `ros_ws/`
+  The higher-level ROS workspace root. This holds the ROS repositories plus
+  generated build/install/log artifacts.
+- `external/`
+  External library checkouts that are consumed by the ROS workspace but are not
+  tracked by `goat_racer`.
 - `scripts/`
   Helper scripts for ROS build and test flows across sibling repos.
 - `notes/`
@@ -17,11 +23,11 @@ orchestration, and the canonical `.repos` manifest for component checkouts.
 
 ## Component Repositories
 
-The current sibling repository set is:
+The current desired checkout layout is:
 
-- `../goat_vesc`
-- `../goat_ros_drivers`
-- `../goat_ros_control`
+- `./external/goat_vesc`
+- `./ros_ws/goat_ros_drivers`
+- `./ros_ws/goat_ros_control`
 
 ## ROS Workflow
 
@@ -34,10 +40,9 @@ scripts/ros test --packages-select goat_vesc goat_vesc_ros goat_teleop
 ```
 
 The helper script builds the sibling repos through `colcon --base-paths` and
-stores workspace artifacts under `goat_racer/goat_ws/`.
+stores workspace artifacts under `goat_racer/ros_ws/`.
 
 ## `.repos`
 
-`goat_racer.repos` currently uses the published GitHub remote for `goat_vesc`
-and local file URLs for `goat_ros_drivers` and `goat_ros_control` until those
-repositories are hosted remotely.
+`goat_racer.repos` encodes the intended local checkout paths so ROS repos land
+inside `ros_ws/` and external libraries land inside `external/`.

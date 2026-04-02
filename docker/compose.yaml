@@ -10,7 +10,7 @@ services:
     tty: true
     working_dir: /workspace/goat_racer
     volumes:
-      - ../..:/workspace
+      - ..:/workspace/goat_racer
       - /dev:/dev
       - /etc/localtime:/etc/localtime:ro
     device_cgroup_rules:

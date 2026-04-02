@@ -1,13 +1,13 @@
 repositories:
-  goat_vesc:
+  external/goat_vesc:
     type: git
     url: https://github.com/ErikLaBrot/goat_vesc.git
     version: main
-  goat_ros_drivers:
+  ros_ws/goat_ros_drivers:
     type: git
-    url: file:///home/erik/goat/goat_ros_drivers
+    url: file:///home/erik/goat/goat_racer/ros_ws/goat_ros_drivers
     version: main
-  goat_ros_control:
+  ros_ws/goat_ros_control:
     type: git
-    url: file:///home/erik/goat/goat_ros_control
+    url: file:///home/erik/goat/goat_racer/ros_ws/goat_ros_control
     version: main

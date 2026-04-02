@@ -1,6 +1,9 @@
-/goat_ws/build/
-/goat_ws/install/
-/goat_ws/log/
+/ros_ws/build/
+/ros_ws/install/
+/ros_ws/log/
+/ros_ws/goat_ros_control/
+/ros_ws/goat_ros_drivers/
+/external/
 /log/
 /.vscode/
 __pycache__/
