@@ -1,0 +1,3 @@
+- Move core/non ros code out of ament_cmake workspace, clean up overall ws
+- Double check how the vesc ros node interface works. We want a nice interface, maybe custom message
+- Double check the ros joy thingy and make sure it lines up with the vesc node

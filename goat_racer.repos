@@ -1,0 +1,13 @@
+repositories:
+  goat_vesc:
+    type: git
+    url: https://github.com/ErikLaBrot/goat_vesc.git
+    version: main
+  goat_ros_drivers:
+    type: git
+    url: file:///home/erik/goat/goat_ros_drivers
+    version: main
+  goat_ros_control:
+    type: git
+    url: file:///home/erik/goat/goat_ros_control
+    version: main

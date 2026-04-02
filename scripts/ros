@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+compose_file="$repo_root/docker/compose.yaml"
+service_name="ros-humble"
+workspace_dir="/workspace/goat_racer"
+build_root="$workspace_dir/goat_ws"
+base_paths=(
+  /workspace/goat_vesc
+  /workspace/goat_ros_drivers
+  /workspace/goat_ros_control
+)
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/ros <up|down|build|test> [args...]
+
+Commands:
+  up                  Start the ROS Docker container in detached mode
+  down                Stop and remove the ROS Docker container
+  build [args...]     Ensure the container is running, then run colcon build across sibling repos
+  test [args...]      Ensure the container is running, build, test, and print test results
+
+Examples:
+  scripts/ros up
+  scripts/ros build --packages-select goat_vesc_ros
+  scripts/ros test --packages-select goat_vesc_ros
+EOF
+}
+
+run_compose() {
+  printf 'Running:'
+  printf ' %q' docker compose -f "$compose_file" "$@"
+  printf '\n'
+  docker compose -f "$compose_file" "$@"
+}
+
+run_in_container() {
+  local script="$1"
+  shift
+
+  printf 'Running:'
+  printf ' %q' docker compose -f "$compose_file" exec -T "$service_name" bash -lc "$script" bash "$@"
+  printf '\n'
+  docker compose -f "$compose_file" exec -T "$service_name" bash -lc "$script" bash "$@"
+}
+
+cleanup_container() {
+  run_compose down
+}
+
+is_running() {
+  local services
+  services="$(docker compose -f "$compose_file" ps --status running --services)"
+  [[ "$services" == *"$service_name"* ]]
+}
+
+ensure_running() {
+  if is_running; then
+    return
+  fi
+
+  echo "Container '$service_name' is not running; starting it now."
+  run_compose up -d
+}
+
+command="${1:-}"
+if [[ -z "$command" || "$command" == "-h" || "$command" == "--help" ]]; then
+  usage
+  exit 0
+fi
+shift
+
+case "$command" in
+  up)
+    run_compose up -d
+    ;;
+  down)
+    run_compose down
+    ;;
+  build)
+    ensure_running
+    trap cleanup_container EXIT
+    run_in_container \
+      "set -eo pipefail; source /opt/ros/humble/setup.bash; set -u; cd '$workspace_dir'; colcon build --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --log-base '$build_root/log' --event-handlers console_direct+ \"\$@\"" \
+      "$@"
+    ;;
+  test)
+    ensure_running
+    trap cleanup_container EXIT
+    run_in_container \
+      "set -eo pipefail; source /opt/ros/humble/setup.bash; cd '$workspace_dir'; colcon build --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --log-base '$build_root/log' --event-handlers console_direct+; source '$build_root/install/setup.bash'; set -u; colcon test --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --log-base '$build_root/log' --event-handlers console_direct+ --return-code-on-test-failure \"\$@\"; colcon test-result --test-result-base '$build_root/build' --verbose" \
+      "$@"
+    ;;
+  *)
+    echo "Unknown command: $command" >&2
+    usage >&2
+    exit 1
+    ;;
+esac

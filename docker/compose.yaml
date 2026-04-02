@@ -1,0 +1,23 @@
+services:
+  ros-humble:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ros-humble
+    image: goat-ros2-humble-dev
+    container_name: goat-ros2-humble-dev
+    network_mode: host
+    stdin_open: true
+    tty: true
+    working_dir: /workspace/goat_racer
+    volumes:
+      - ../..:/workspace
+      - /dev:/dev
+      - /etc/localtime:/etc/localtime:ro
+    device_cgroup_rules:
+      - "c 4:* rmw"
+      - "c 166:* rmw"
+      - "c 188:* rmw"
+    environment:
+      ROS_DOMAIN_ID: "0"
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+    command: bash
