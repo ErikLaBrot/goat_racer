@@ -5,9 +5,9 @@ repositories:
     version: main
   ros_ws/src/goat_ros_drivers:
     type: git
-    url: file:///home/erik/goat/goat_racer/ros_ws/src/goat_ros_drivers
+    url: https://github.com/ErikLaBrot/goat_ros_drivers.git
     version: main
   ros_ws/src/goat_ros_control:
     type: git
-    url: file:///home/erik/goat/goat_racer/ros_ws/src/goat_ros_control
+    url: https://github.com/ErikLaBrot/goat_ros_control.git
     version: main
