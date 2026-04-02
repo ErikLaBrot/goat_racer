@@ -15,6 +15,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     device_cgroup_rules:
       - "c 4:* rmw"
+      - "c 13:* rmw"
       - "c 166:* rmw"
       - "c 188:* rmw"
     environment:
