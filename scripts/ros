@@ -9,8 +9,8 @@ workspace_dir="$workspace_root/ros_ws"
 build_root="$workspace_dir"
 base_paths=(
   /workspace/goat_racer/external/goat_vesc
-  /workspace/goat_racer/ros_ws/goat_ros_drivers
-  /workspace/goat_racer/ros_ws/goat_ros_control
+  /workspace/goat_racer/ros_ws/src/goat_ros_drivers
+  /workspace/goat_racer/ros_ws/src/goat_ros_control
 )
 
 usage() {

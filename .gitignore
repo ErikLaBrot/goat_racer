@@ -1,8 +1,8 @@
 /ros_ws/build/
 /ros_ws/install/
 /ros_ws/log/
-/ros_ws/goat_ros_control/
-/ros_ws/goat_ros_drivers/
+/ros_ws/src/goat_ros_control/
+/ros_ws/src/goat_ros_drivers/
 /external/
 /log/
 /.vscode/

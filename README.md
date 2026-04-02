@@ -26,8 +26,8 @@ orchestration, and the canonical `.repos` manifest for component checkouts.
 The current desired checkout layout is:
 
 - `./external/goat_vesc`
-- `./ros_ws/goat_ros_drivers`
-- `./ros_ws/goat_ros_control`
+- `./ros_ws/src/goat_ros_drivers`
+- `./ros_ws/src/goat_ros_control`
 
 ## ROS Workflow
 
@@ -45,4 +45,4 @@ stores workspace artifacts under `goat_racer/ros_ws/`.
 ## `.repos`
 
 `goat_racer.repos` encodes the intended local checkout paths so ROS repos land
-inside `ros_ws/` and external libraries land inside `external/`.
+inside `ros_ws/src/` and external libraries land inside `external/`.
