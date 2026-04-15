@@ -1,127 +1,72 @@
 # goat_racer
 
-`goat_racer` is the workspace-orchestration repository for the GOAT racer
-stack. It owns the Docker-based ROS development flow, workspace-level docs and
-notes, and the canonical checkout layout for the nested code repositories.
+## Description
 
-## Purpose
+`goat_racer` is the top-level orchestration repository for the GOAT racer
+workspace. It owns the shared Docker-based ROS workflow, the nested checkout
+bootstrap, and the top-level helper scripts used to build, test, and run the
+demo.
 
-Use this repo to:
+Detailed package and implementation docs live in the nested repositories, not
+in this README.
 
-- bootstrap the expected local checkout layout
-- run the shared ROS container workflow
-- build and test the nested GOAT packages together
-- document how the workspace is assembled
+## Requirements
 
-This repo does not own the full implementation of every package in the
-workspace. The ROS packages and the VESC transport library live in nested git
-repositories under the paths described below.
+- Docker with `docker compose`
+- Permission to run Docker commands on the host
 
-## Workspace Layout
+The shared container provides ROS tooling, `vcstool`, and `rosdep`, so a host
+ROS install is not required.
 
-- `docker/`
-  Container and compose files for the ROS development environment.
-- `docs/`
-  Shared documentation templates and workspace-level references.
-- `external/`
-  Nested external dependencies that are consumed by the ROS workspace.
-- `notes/`
-  Local notes and planning material for the workspace.
-- `ros_ws/`
-  Workspace root used for nested ROS repositories plus generated build,
-  install, and log artifacts.
-- `scripts/`
-  Operator-facing helpers for common workspace tasks.
-- `goat_racer.repos`
-  Canonical manifest for populating the expected checkout structure.
+## Install
 
-## Repository Ownership
-
-The current intended checkout layout is:
-
-- `external/goat_vesc`
-  Nested `goat_vesc` repository. Owns the reusable VESC transport library,
-  examples, tests, and generated API docs.
-- `ros_ws/src/goat_ros`
-  Nested `goat_ros` repository. Owns the ROS-facing packages, including
-  `goat_vesc_ros` and `goat_teleop`.
-
-Generated ROS workspace artifacts remain under `ros_ws/build`, `ros_ws/install`,
-and `ros_ws/log`, but those outputs are not the source of truth for the code.
-
-## Prerequisites
-
-Before running the workspace:
-
-- Install Docker with `docker compose` support on the host.
-- Ensure the target VESC serial device is reachable from the host and visible
-  under `/dev`.
-- Ensure the joystick device is reachable from the host, typically
-  `/dev/input/js0`.
-- Use a host account that can run Docker commands.
-
-The shared container already includes `vcstool`, `rosdep`, and the ROS build
-tooling needed for the bootstrap path. The host does not need a native ROS
-installation.
-
-## Fresh Clone To Demo
-
-From a fresh `goat_racer` checkout:
+Clone the repo and bootstrap the workspace:
 
 ```bash
 git clone https://github.com/ErikLaBrot/goat_racer.git
 cd goat_racer
-scripts/ros bootstrap
+./scripts/ros bootstrap
 ```
 
-`scripts/ros bootstrap` starts the shared ROS container, imports the nested
-repositories defined in `goat_racer.repos`, installs non-source ROS
-dependencies with `rosdep`, and builds the workspace under `ros_ws/`.
+`scripts/ros bootstrap` imports the nested repositories defined in
+`goat_racer.repos`, installs ROS dependencies, and builds the workspace.
 
 Before running the demo, update
 `ros_ws/src/goat_ros/goat_ros_drivers/goat_vesc_ros/config/goat_vesc.yaml` so
-`device_path` points at the correct VESC serial device.
+`device_path` points at the correct VESC interface.
 
-Start the end-to-end controller demo with:
+## Demo
 
-```bash
-scripts/demo
-```
-
-Launch overrides are forwarded directly to the combined ROS launch entrypoint:
+Run the end-to-end controller demo with:
 
 ```bash
-scripts/demo joy_dev:=/dev/input/js1 deadzone:=0.02
+./scripts/demo
 ```
 
-## Demo Success Criteria
-
-The controller demo is considered up when:
-
-- `goat_vesc_ros`, `joy_node`, and `goat_joy` start without launch errors
-- `goat_joy` publishes `goat_vesc_ros/msg/VescControlCommand` on `cmd/vesc`
-- the configured VESC device connects and telemetry topics begin publishing
-- holding the enable button on the joystick causes non-zero commands to reach
-  `cmd/vesc`
-
-If the launch starts but hardware is disconnected, ROS process startup is still
-useful for bringup validation, but the demo is not functionally complete.
-
-## Build And Test Helpers
-
-From the `goat_racer` repo root:
+Launch overrides are forwarded to the combined ROS launch entrypoint:
 
 ```bash
-scripts/ros build --packages-select goat_vesc goat_vesc_ros goat_teleop
-scripts/ros test --packages-select goat_vesc goat_vesc_ros goat_teleop
-scripts/ros down
+./scripts/demo joy_dev:=/dev/input/js1 deadzone:=0.02
 ```
 
-The helper script runs `colcon` inside the shared ROS container and targets the
-nested repositories through explicit `--base-paths`. Workspace build artifacts
-are written under `goat_racer/ros_ws/`.
+Full demo behavior depends on the target hardware being connected and reachable
+from the host.
 
-## `.repos` Manifest
+## Scripts
 
-`goat_racer.repos` defines the expected checkout paths so the nested repositories
-land in the locations assumed by the Docker workflow and `scripts/ros`.
+- `scripts/ros bootstrap`
+  Populate nested repos, install ROS dependencies, and build the workspace.
+- `scripts/ros build --packages-select goat_vesc goat_vesc_ros goat_teleop`
+  Build the main GOAT workspace packages inside the shared container.
+- `scripts/ros test --packages-select goat_vesc goat_vesc_ros goat_teleop`
+  Build, test, and print test results for the main GOAT workspace packages.
+- `scripts/ros down`
+  Stop and remove the shared ROS container.
+- `scripts/demo`
+  Launch the end-to-end controller demo from the built workspace.
+
+## Notes
+
+- Detailed ROS package docs live in [ros_ws/src/goat_ros/README.md](/home/erik/goat/goat_racer/ros_ws/src/goat_ros/README.md).
+- Detailed `goat_vesc` docs live in [external/goat_vesc/README.md](/home/erik/goat/goat_racer/external/goat_vesc/README.md).
+- The nested checkout manifest lives in [goat_racer.repos](/home/erik/goat/goat_racer/goat_racer.repos).
