@@ -2,25 +2,28 @@
 # Workspace ROS container helper.
 #
 # Purpose:
-#   Start the shared ROS container and run workspace-scoped build or test flows
-#   against the nested GOAT repositories from the `goat_racer` checkout.
+#   Start the shared ROS container and run workspace-scoped bootstrap, build,
+#   or test flows against the nested GOAT repositories from the `goat_racer`
+#   checkout.
 #
 # Inputs:
-#   A subcommand of `up`, `down`, `build`, or `test`, plus any extra colcon
-#   arguments for the build and test paths.
+#   A subcommand of `up`, `down`, `bootstrap`, `build`, or `test`, plus any
+#   extra colcon arguments for the build and test paths.
 #
 # Outputs:
-#   Starts or stops the Docker container and writes build, install, log, and
-#   test artifacts under `ros_ws/`.
+#   Starts or stops the Docker container, optionally populates nested
+#   repositories and ROS dependencies, and writes build, install, log, and test
+#   artifacts under `ros_ws/`.
 #
 # Usage:
 #   scripts/ros up
+#   scripts/ros bootstrap
 #   scripts/ros build --packages-select goat_vesc goat_vesc_ros goat_teleop
 #   scripts/ros test --packages-select goat_vesc goat_vesc_ros goat_teleop
 #
 # Notes:
-#   Build and test commands automatically start the container if needed and
-#   shut it down again on exit.
+#   Bootstrap, build, and test commands automatically start the container if
+#   needed and shut it down again on exit.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -29,6 +32,9 @@ service_name="ros-humble"
 workspace_root="/workspace/goat_racer"
 workspace_dir="$workspace_root/ros_ws"
 build_root="$workspace_dir"
+manifest_path="$workspace_root/goat_racer.repos"
+legacy_goat_ros_path="$repo_root/ros_ws/src/.git"
+canonical_goat_ros_path="$repo_root/ros_ws/src/goat_ros/.git"
 base_paths=(
   /workspace/goat_racer/external/goat_vesc
   /workspace/goat_racer/ros_ws/src/goat_ros
@@ -36,16 +42,18 @@ base_paths=(
 
 usage() {
   cat <<'EOF'
-Usage: scripts/ros <up|down|build|test> [args...]
+Usage: scripts/ros <up|down|bootstrap|build|test> [args...]
 
 Commands:
   up                  Start the ROS Docker container in detached mode
   down                Stop and remove the ROS Docker container
+  bootstrap           Import nested repos, install ROS deps, and build the workspace
   build [args...]     Ensure the container is running, then run colcon build across the nested ROS workspace
   test [args...]      Ensure the container is running, build, test, and print test results
 
 Examples:
   scripts/ros up
+  scripts/ros bootstrap
   scripts/ros build --packages-select goat_vesc_ros
   scripts/ros test --packages-select goat_vesc_ros
 EOF
@@ -70,6 +78,17 @@ run_in_container() {
 
 cleanup_container() {
   run_compose down
+}
+
+check_workspace_layout() {
+  if [[ -d "$legacy_goat_ros_path" && ! -d "$canonical_goat_ros_path" ]]; then
+    cat >&2 <<'EOF'
+Legacy goat_ros checkout detected at ros_ws/src.
+The canonical nested repository path is ros_ws/src/goat_ros.
+Move the existing checkout into ros_ws/src/goat_ros or remove ros_ws/src and rerun scripts/ros bootstrap.
+EOF
+    exit 1
+  fi
 }
 
 is_running() {
@@ -102,6 +121,7 @@ case "$command" in
     run_compose down
     ;;
   build)
+    check_workspace_layout
     ensure_running
     trap cleanup_container EXIT
     run_in_container \
@@ -109,10 +129,19 @@ case "$command" in
       "$@"
     ;;
   test)
+    check_workspace_layout
     ensure_running
     trap cleanup_container EXIT
     run_in_container \
       "set -eo pipefail; source /opt/ros/humble/setup.bash; cd '$workspace_dir'; colcon --log-base '$build_root/log' build --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+; source '$build_root/install/setup.bash'; set -u; colcon --log-base '$build_root/log' test --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+ --return-code-on-test-failure \"\$@\"; colcon test-result --test-result-base '$build_root/build' --verbose" \
+      "$@"
+    ;;
+  bootstrap)
+    check_workspace_layout
+    ensure_running
+    trap cleanup_container EXIT
+    run_in_container \
+      "set -eo pipefail; source /opt/ros/humble/setup.bash; set -u; cd '$workspace_root'; git config --global --add safe.directory '$workspace_root'; if [[ -d '$workspace_root/external/goat_vesc/.git' ]]; then git config --global --add safe.directory '$workspace_root/external/goat_vesc'; fi; if [[ -d '$workspace_root/ros_ws/src/goat_ros/.git' ]]; then git config --global --add safe.directory '$workspace_root/ros_ws/src/goat_ros'; fi; vcs import '$workspace_root' < '$manifest_path'; rosdep update; rosdep install --from-paths '$workspace_root/external/goat_vesc' '$workspace_root/ros_ws/src/goat_ros' --ignore-src -t build -t build_export -t buildtool -t buildtool_export -t exec --rosdistro humble -r -y; cd '$workspace_dir'; colcon --log-base '$build_root/log' build --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+; echo; echo 'Bootstrap complete. Next step: scripts/demo'" \
       "$@"
     ;;
   *)

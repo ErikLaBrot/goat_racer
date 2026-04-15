@@ -49,12 +49,69 @@ The current intended checkout layout is:
 Generated ROS workspace artifacts remain under `ros_ws/build`, `ros_ws/install`,
 and `ros_ws/log`, but those outputs are not the source of truth for the code.
 
-## Workflow
+## Prerequisites
+
+Before running the workspace:
+
+- Install Docker with `docker compose` support on the host.
+- Ensure the target VESC serial device is reachable from the host and visible
+  under `/dev`.
+- Ensure the joystick device is reachable from the host, typically
+  `/dev/input/js0`.
+- Use a host account that can run Docker commands.
+
+The shared container already includes `vcstool`, `rosdep`, and the ROS build
+tooling needed for the bootstrap path. The host does not need a native ROS
+installation.
+
+## Fresh Clone To Demo
+
+From a fresh `goat_racer` checkout:
+
+```bash
+git clone https://github.com/ErikLaBrot/goat_racer.git
+cd goat_racer
+scripts/ros bootstrap
+```
+
+`scripts/ros bootstrap` starts the shared ROS container, imports the nested
+repositories defined in `goat_racer.repos`, installs non-source ROS
+dependencies with `rosdep`, and builds the workspace under `ros_ws/`.
+
+Before running the demo, update
+`ros_ws/src/goat_ros/goat_ros_drivers/goat_vesc_ros/config/goat_vesc.yaml` so
+`device_path` points at the correct VESC serial device.
+
+Start the end-to-end controller demo with:
+
+```bash
+scripts/demo
+```
+
+Launch overrides are forwarded directly to the combined ROS launch entrypoint:
+
+```bash
+scripts/demo joy_dev:=/dev/input/js1 deadzone:=0.02
+```
+
+## Demo Success Criteria
+
+The controller demo is considered up when:
+
+- `goat_vesc_ros`, `joy_node`, and `goat_joy` start without launch errors
+- `goat_joy` publishes `goat_vesc_ros/msg/VescControlCommand` on `cmd/vesc`
+- the configured VESC device connects and telemetry topics begin publishing
+- holding the enable button on the joystick causes non-zero commands to reach
+  `cmd/vesc`
+
+If the launch starts but hardware is disconnected, ROS process startup is still
+useful for bringup validation, but the demo is not functionally complete.
+
+## Build And Test Helpers
 
 From the `goat_racer` repo root:
 
 ```bash
-scripts/ros up
 scripts/ros build --packages-select goat_vesc goat_vesc_ros goat_teleop
 scripts/ros test --packages-select goat_vesc goat_vesc_ros goat_teleop
 scripts/ros down

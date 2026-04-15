@@ -3,7 +3,7 @@ repositories:
     type: git
     url: https://github.com/ErikLaBrot/goat_vesc.git
     version: main
-  ros_ws/src:
+  ros_ws/src/goat_ros:
     type: git
     url: https://github.com/ErikLaBrot/goat_ros
     version: main
