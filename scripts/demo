@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Run the end-to-end GOAT controller demo.
+#
+# Purpose:
+#   Start the shared ROS container when needed, source the built workspace, and
+#   launch the combined VESC plus joystick teleop demo entrypoint.
+#
+# Inputs:
+#   Optional ROS launch arguments for `goat_teleop controller_demo.launch.py`.
+#
+# Outputs:
+#   Starts the combined ROS demo inside the shared container and streams launch
+#   output to the terminal.
+#
+# Usage:
+#   scripts/demo
+#   scripts/demo joy_dev:=/dev/input/js1 deadzone:=0.02
+#
+# Notes:
+#   Requires a completed `scripts/ros bootstrap` run so the workspace install
+#   setup file exists.
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+compose_file="$repo_root/docker/compose.yaml"
+service_name="ros-humble"
+workspace_install="/workspace/goat_racer/ros_ws/install/setup.bash"
+
+is_running() {
+  local services
+  services="$(docker compose -f "$compose_file" ps --status running --services)"
+  [[ "$services" == *"$service_name"* ]]
+}
+
+ensure_running() {
+  if is_running; then
+    return
+  fi
+
+  echo "Container '$service_name' is not running; starting it now."
+  docker compose -f "$compose_file" up -d
+}
+
+if [[ ! -f "$repo_root/ros_ws/install/setup.bash" ]]; then
+  echo "Workspace install is missing. Run scripts/ros bootstrap first." >&2
+  exit 1
+fi
+
+ensure_running
+
+printf 'Running:'
+printf ' %q' docker compose -f "$compose_file" exec "$service_name" bash -lc \
+  "source /opt/ros/humble/setup.bash && source '$workspace_install' && ros2 launch goat_teleop controller_demo.launch.py \"\$@\"" \
+  bash "$@"
+printf '\n'
+
+exec docker compose -f "$compose_file" exec "$service_name" bash -lc \
+  "source /opt/ros/humble/setup.bash && source '$workspace_install' && ros2 launch goat_teleop controller_demo.launch.py \"\$@\"" \
+  bash "$@"
