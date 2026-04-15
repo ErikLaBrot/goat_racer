@@ -1,4 +1,26 @@
 #!/usr/bin/env bash
+# Workspace ROS container helper.
+#
+# Purpose:
+#   Start the shared ROS container and run workspace-scoped build or test flows
+#   against the nested GOAT repositories from the `goat_racer` checkout.
+#
+# Inputs:
+#   A subcommand of `up`, `down`, `build`, or `test`, plus any extra colcon
+#   arguments for the build and test paths.
+#
+# Outputs:
+#   Starts or stops the Docker container and writes build, install, log, and
+#   test artifacts under `ros_ws/`.
+#
+# Usage:
+#   scripts/ros up
+#   scripts/ros build --packages-select goat_vesc goat_vesc_ros goat_teleop
+#   scripts/ros test --packages-select goat_vesc goat_vesc_ros goat_teleop
+#
+# Notes:
+#   Build and test commands automatically start the container if needed and
+#   shut it down again on exit.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -9,8 +31,7 @@ workspace_dir="$workspace_root/ros_ws"
 build_root="$workspace_dir"
 base_paths=(
   /workspace/goat_racer/external/goat_vesc
-  /workspace/goat_racer/ros_ws/src/goat_ros_drivers
-  /workspace/goat_racer/ros_ws/src/goat_ros_control
+  /workspace/goat_racer/ros_ws/src/goat_ros
 )
 
 usage() {
