@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
-# Run the end-to-end GOAT controller demo.
+# Run the canonical GOAT robot bringup demo.
 #
 # Purpose:
 #   Start the shared ROS container when needed, source the built workspace, and
-#   launch the combined VESC plus joystick teleop demo entrypoint.
+#   launch the canonical GOAT robot bringup entrypoint.
 #
 # Inputs:
-#   Optional ROS launch arguments for `goat_teleop controller_demo.launch.py`.
+#   Optional ROS launch arguments for `goat_ros_launch robot.launch.py`.
 #
 # Outputs:
-#   Starts the combined ROS demo inside the shared container and streams launch
+#   Starts the robot bringup demo inside the shared container and streams launch
 #   output to the terminal.
 #
 # Usage:
 #   scripts/demo
 #   scripts/demo joy_dev:=/dev/input/js1 deadzone:=0.02
+#   scripts/demo record:=true record_profile:=slam
 #
 # Notes:
 #   Requires a completed `scripts/ros bootstrap` run so the workspace install
@@ -50,10 +51,10 @@ ensure_running
 
 printf 'Running:'
 printf ' %q' docker compose -f "$compose_file" exec "$service_name" bash -lc \
-  "source /opt/ros/humble/setup.bash && source '$workspace_install' && ros2 launch goat_teleop controller_demo.launch.py \"\$@\"" \
+  "source /opt/ros/humble/setup.bash && source '$workspace_install' && ros2 launch goat_ros_launch robot.launch.py \"\$@\"" \
   bash "$@"
 printf '\n'
 
 exec docker compose -f "$compose_file" exec "$service_name" bash -lc \
-  "source /opt/ros/humble/setup.bash && source '$workspace_install' && ros2 launch goat_teleop controller_demo.launch.py \"\$@\"" \
+  "source /opt/ros/humble/setup.bash && source '$workspace_install' && ros2 launch goat_ros_launch robot.launch.py \"\$@\"" \
   bash "$@"
