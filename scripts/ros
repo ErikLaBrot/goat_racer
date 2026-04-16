@@ -17,7 +17,7 @@
 #
 # Usage:
 #   scripts/ros up
-#   GOAT_TARGET=jetson scripts/ros up
+#   GOAT_TARGET=workstation scripts/ros up
 #   scripts/ros bootstrap
 #   scripts/ros build --packages-up-to goat_ros_launch
 #   scripts/ros test --packages-select goat_ros_launch
@@ -25,7 +25,7 @@
 # Notes:
 #   Bootstrap, build, and test commands automatically start the container if
 #   needed and shut it down again on exit. `GOAT_TARGET` selects the compose
-#   overlay and defaults to `workstation`.
+#   overlay and defaults to `jetson`.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -40,7 +40,7 @@ base_paths=(
   /workspace/goat_racer/external/goat_vesc
   /workspace/goat_racer/ros_ws/src/goat_ros
 )
-default_target="workstation"
+default_target="jetson"
 target="${GOAT_TARGET:-$default_target}"
 compose_base_file="$repo_root/docker/compose.yaml"
 compose_target_file="$repo_root/docker/compose.$target.yaml"
@@ -54,7 +54,7 @@ usage() {
 Usage: scripts/ros <up|down|bootstrap|build|test> [args...]
 
 Environment:
-  GOAT_TARGET         Compose target to use (`workstation` or `jetson`; default: `workstation`)
+  GOAT_TARGET         Compose target to use (`workstation` or `jetson`; default: `jetson`)
 
 Commands:
   up                  Start the ROS Docker container in detached mode
@@ -65,7 +65,7 @@ Commands:
 
 Examples:
   scripts/ros up
-  GOAT_TARGET=jetson scripts/ros up
+  GOAT_TARGET=workstation scripts/ros up
   scripts/ros bootstrap
   scripts/ros build --packages-up-to goat_ros_launch
   scripts/ros test --packages-select goat_ros_launch

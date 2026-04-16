@@ -28,8 +28,8 @@ The Docker setup uses a shared base compose file plus one target overlay:
 - `docker/compose.jetson.yaml`
   Native Jetson target (`arm64`).
 
-Helper scripts default to the workstation target. Set `GOAT_TARGET=jetson`
-when running commands on the Jetson host.
+Helper scripts default to the Jetson target. Use `GOAT_TARGET=workstation`
+when running the secondary Ubuntu workstation dev/debug flow.
 
 The Jetson Dockerfile uses an `arm64` ROS Humble base image so the container
 builds natively on Jetson hosts.
@@ -47,10 +47,10 @@ cd goat_racer
 `scripts/ros bootstrap` imports the nested repositories defined in
 `goat_racer.repos`, installs ROS dependencies, and builds the workspace.
 
-On Jetson, run the same flow with `GOAT_TARGET=jetson`:
+On an Ubuntu workstation, select the secondary dev/debug target explicitly:
 
 ```bash
-GOAT_TARGET=jetson ./scripts/ros bootstrap
+GOAT_TARGET=workstation ./scripts/ros bootstrap
 ```
 
 Before running the demo, update
@@ -65,10 +65,10 @@ Run the canonical robot bringup demo with:
 ./scripts/demo
 ```
 
-On Jetson, select the Jetson overlay explicitly:
+On an Ubuntu workstation, select the workstation overlay explicitly:
 
 ```bash
-GOAT_TARGET=jetson ./scripts/demo
+GOAT_TARGET=workstation ./scripts/demo
 ```
 
 Launch overrides are forwarded to `goat_ros_launch robot.launch.py`:
@@ -102,15 +102,15 @@ GOAT_ROSBAG_DIR=ros_ws/bags/demo ./scripts/demo record:=true
 Replay a saved bag from the same mounted location:
 
 ```bash
-docker compose -f docker/compose.yaml -f docker/compose.workstation.yaml run --rm ros-humble bash -lc \
+docker compose -f docker/compose.yaml -f docker/compose.jetson.yaml run --rm ros-humble bash -lc \
   'source /opt/ros/humble/setup.bash && \
    source /workspace/goat_racer/ros_ws/install/setup.bash && \
    ros2 launch goat_ros_launch replay.launch.py \
      bag_path:=/workspace/goat_racer/ros_ws/bags/<bag_name>'
 ```
 
-Swap in `docker/compose.jetson.yaml` or set `GOAT_TARGET=jetson` in the helper
-scripts when running on the Jetson host.
+Swap in `docker/compose.workstation.yaml` or set `GOAT_TARGET=workstation` in
+the helper scripts when running on the Ubuntu workstation dev/debug host.
 
 This change only separates workstation and Jetson host targets. It does not yet
 add Jetson-specific NVIDIA runtime flags, GUI/display forwarding, or additional

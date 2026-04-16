@@ -14,7 +14,7 @@
 #
 # Usage:
 #   scripts/demo
-#   GOAT_TARGET=jetson scripts/demo
+#   GOAT_TARGET=workstation scripts/demo
 #   scripts/demo joy_dev:=/dev/input/js1 deadzone:=0.02
 #   scripts/demo record:=true record_profile:=slam
 #   GOAT_ROSBAG_DIR=ros_ws/bags/demo scripts/demo record:=true
@@ -22,7 +22,7 @@
 # Notes:
 #   Requires a completed `scripts/ros bootstrap` run so the workspace install
 #   setup file exists. `GOAT_TARGET` selects the compose overlay and defaults
-#   to `workstation`.
+#   to `jetson`.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -30,7 +30,7 @@ service_name="ros-humble"
 workspace_root="/workspace/goat_racer"
 workspace_install="/workspace/goat_racer/ros_ws/install/setup.bash"
 default_rosbag_dir="ros_ws/bags"
-default_target="workstation"
+default_target="jetson"
 target="${GOAT_TARGET:-$default_target}"
 compose_base_file="$repo_root/docker/compose.yaml"
 compose_target_file="$repo_root/docker/compose.$target.yaml"
