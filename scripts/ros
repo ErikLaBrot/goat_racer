@@ -17,17 +17,18 @@
 #
 # Usage:
 #   scripts/ros up
+#   GOAT_TARGET=jetson scripts/ros up
 #   scripts/ros bootstrap
 #   scripts/ros build --packages-up-to goat_ros_launch
 #   scripts/ros test --packages-select goat_ros_launch
 #
 # Notes:
 #   Bootstrap, build, and test commands automatically start the container if
-#   needed and shut it down again on exit.
+#   needed and shut it down again on exit. `GOAT_TARGET` selects the compose
+#   overlay and defaults to `workstation`.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-compose_file="$repo_root/docker/compose.yaml"
 service_name="ros-humble"
 workspace_root="/workspace/goat_racer"
 workspace_dir="$workspace_root/ros_ws"
@@ -39,10 +40,21 @@ base_paths=(
   /workspace/goat_racer/external/goat_vesc
   /workspace/goat_racer/ros_ws/src/goat_ros
 )
+default_target="workstation"
+target="${GOAT_TARGET:-$default_target}"
+compose_base_file="$repo_root/docker/compose.yaml"
+compose_target_file="$repo_root/docker/compose.$target.yaml"
+compose_args=(
+  -f "$compose_base_file"
+  -f "$compose_target_file"
+)
 
 usage() {
   cat <<'EOF'
 Usage: scripts/ros <up|down|bootstrap|build|test> [args...]
+
+Environment:
+  GOAT_TARGET         Compose target to use (`workstation` or `jetson`; default: `workstation`)
 
 Commands:
   up                  Start the ROS Docker container in detached mode
@@ -53,27 +65,46 @@ Commands:
 
 Examples:
   scripts/ros up
+  GOAT_TARGET=jetson scripts/ros up
   scripts/ros bootstrap
   scripts/ros build --packages-up-to goat_ros_launch
   scripts/ros test --packages-select goat_ros_launch
 EOF
 }
 
-run_compose() {
+validate_target() {
+  case "$target" in
+    workstation|jetson)
+      ;;
+    *)
+      echo "Invalid GOAT_TARGET '$target'. Expected 'workstation' or 'jetson'." >&2
+      exit 1
+      ;;
+  esac
+
+  if [[ ! -f "$compose_target_file" ]]; then
+    echo "Compose target file '$compose_target_file' does not exist." >&2
+    exit 1
+  fi
+}
+
+print_command() {
   printf 'Running:'
-  printf ' %q' docker compose -f "$compose_file" "$@"
+  printf ' %q' "$@"
   printf '\n'
-  docker compose -f "$compose_file" "$@"
+}
+
+run_compose() {
+  print_command docker compose "${compose_args[@]}" "$@"
+  docker compose "${compose_args[@]}" "$@"
 }
 
 run_in_container() {
   local script="$1"
   shift
 
-  printf 'Running:'
-  printf ' %q' docker compose -f "$compose_file" exec -T "$service_name" bash -lc "$script" bash "$@"
-  printf '\n'
-  docker compose -f "$compose_file" exec -T "$service_name" bash -lc "$script" bash "$@"
+  print_command docker compose "${compose_args[@]}" exec -T "$service_name" bash -lc "$script" bash "$@"
+  docker compose "${compose_args[@]}" exec -T "$service_name" bash -lc "$script" bash "$@"
 }
 
 cleanup_container() {
@@ -93,7 +124,7 @@ EOF
 
 is_running() {
   local services
-  services="$(docker compose -f "$compose_file" ps --status running --services)"
+  services="$(docker compose "${compose_args[@]}" ps --status running --services)"
   [[ "$services" == *"$service_name"* ]]
 }
 
@@ -102,7 +133,7 @@ ensure_running() {
     return
   fi
 
-  echo "Container '$service_name' is not running; starting it now."
+  echo "Container '$service_name' for GOAT_TARGET='$target' is not running; starting it now."
   run_compose up -d
 }
 
@@ -112,6 +143,8 @@ if [[ -z "$command" || "$command" == "-h" || "$command" == "--help" ]]; then
   exit 0
 fi
 shift
+
+validate_target
 
 case "$command" in
   up)

@@ -1,0 +1,8 @@
+services:
+  ros-humble:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ros-humble.workstation
+    image: goat-ros2-humble-workstation-dev
+    container_name: goat-ros2-humble-workstation-dev
+    platform: linux/amd64

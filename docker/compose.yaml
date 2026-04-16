@@ -1,10 +1,5 @@
 services:
   ros-humble:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.ros-humble
-    image: goat-ros2-humble-dev
-    container_name: goat-ros2-humble-dev
     network_mode: host
     stdin_open: true
     tty: true
