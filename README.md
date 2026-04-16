@@ -55,6 +55,32 @@ Record an MCAP rosbag using one of the installed topic profiles:
 ./scripts/demo record:=true record_profile:=slam
 ```
 
+Demo recordings default to `ros_ws/bags` on the host, which is mounted inside
+the ROS container as `/workspace/goat_racer/ros_ws/bags`. Use a launch override
+when a single run needs another container-visible directory:
+
+```bash
+./scripts/demo record:=true bag_dir:=/workspace/goat_racer/ros_ws/bags/demo
+```
+
+Use `GOAT_ROSBAG_DIR` when you want to change the top-level default without
+typing `bag_dir` each time. Relative values are resolved from the repo root and
+passed into the container through the workspace mount:
+
+```bash
+GOAT_ROSBAG_DIR=ros_ws/bags/demo ./scripts/demo record:=true
+```
+
+Replay a saved bag from the same mounted location:
+
+```bash
+docker compose -f docker/compose.yaml run --rm ros-humble bash -lc \
+  'source /opt/ros/humble/setup.bash && \
+   source /workspace/goat_racer/ros_ws/install/setup.bash && \
+   ros2 launch goat_ros_launch replay.launch.py \
+     bag_path:=/workspace/goat_racer/ros_ws/bags/<bag_name>'
+```
+
 Full demo behavior depends on the target hardware being connected and reachable
 from the host.
 
