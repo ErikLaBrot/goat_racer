@@ -18,8 +18,8 @@
 # Usage:
 #   scripts/ros up
 #   scripts/ros bootstrap
-#   scripts/ros build --packages-select goat_vesc goat_vesc_ros goat_teleop
-#   scripts/ros test --packages-select goat_vesc goat_vesc_ros goat_teleop
+#   scripts/ros build --packages-up-to goat_ros_launch
+#   scripts/ros test --packages-select goat_ros_launch
 #
 # Notes:
 #   Bootstrap, build, and test commands automatically start the container if
@@ -54,8 +54,8 @@ Commands:
 Examples:
   scripts/ros up
   scripts/ros bootstrap
-  scripts/ros build --packages-select goat_vesc_ros
-  scripts/ros test --packages-select goat_vesc_ros
+  scripts/ros build --packages-up-to goat_ros_launch
+  scripts/ros test --packages-select goat_ros_launch
 EOF
 }
 

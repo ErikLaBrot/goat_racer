@@ -5,7 +5,7 @@
 `goat_racer` is the top-level orchestration repository for the GOAT racer
 workspace. It owns the shared Docker-based ROS workflow, the nested checkout
 bootstrap, and the top-level helper scripts used to build, test, and run the
-demo.
+canonical robot bringup demo.
 
 Detailed package and implementation docs live in the nested repositories, not
 in this README.
@@ -37,16 +37,22 @@ Before running the demo, update
 
 ## Demo
 
-Run the end-to-end controller demo with:
+Run the canonical robot bringup demo with:
 
 ```bash
 ./scripts/demo
 ```
 
-Launch overrides are forwarded to the combined ROS launch entrypoint:
+Launch overrides are forwarded to `goat_ros_launch robot.launch.py`:
 
 ```bash
 ./scripts/demo joy_dev:=/dev/input/js1 deadzone:=0.02
+```
+
+Record an MCAP rosbag using one of the installed topic profiles:
+
+```bash
+./scripts/demo record:=true record_profile:=slam
 ```
 
 Full demo behavior depends on the target hardware being connected and reachable
@@ -56,14 +62,14 @@ from the host.
 
 - `scripts/ros bootstrap`
   Populate nested repos, install ROS dependencies, and build the workspace.
-- `scripts/ros build --packages-select goat_vesc goat_vesc_ros goat_teleop`
+- `scripts/ros build --packages-up-to goat_ros_launch`
   Build the main GOAT workspace packages inside the shared container.
-- `scripts/ros test --packages-select goat_vesc goat_vesc_ros goat_teleop`
+- `scripts/ros test --packages-select goat_ros_launch`
   Build, test, and print test results for the main GOAT workspace packages.
 - `scripts/ros down`
   Stop and remove the shared ROS container.
 - `scripts/demo`
-  Launch the end-to-end controller demo from the built workspace.
+  Launch `goat_ros_launch robot.launch.py` from the built workspace.
 
 ## Notes
 
