@@ -1,4 +1,4 @@
-FROM ros:humble-perception
+FROM ros:humble-ros-base-jammy
 
 SHELL ["/bin/bash", "-lc"]
 

@@ -33,8 +33,14 @@ ROS dependencies across the workspace roots, and builds the workspace.
 
 The GOAT sources live in `goat_racer.repos`. NVIDIA Isaac ROS sources live in
 `isaac_ros.repos` and are checked out under `ros_ws/src/isaac_ros`.
-`isaac_ros_common` tracks the `release-3.2` branch so the workspace stays on
-the JetPack 6.2 and ROS 2 Humble support line.
+The manifest currently includes `isaac_ros_common`, `isaac_ros_visual_slam`,
+and `isaac_ros_nvblox`, all on the `release-3.2` branch so the workspace stays
+on the JetPack 6.2 and ROS 2 Humble support line.
+
+`isaac_ros_visual_slam` and `isaac_ros_nvblox` also depend on additional Isaac
+ROS source packages such as the GXF and NITROS stacks, so this manifest is the
+initial repository set rather than the complete transitive Isaac ROS source
+closure.
 
 Before running the demo, update
 `ros_ws/src/goat_ros/goat_ros_drivers/goat_vesc_ros/config/goat_vesc.yaml` so
