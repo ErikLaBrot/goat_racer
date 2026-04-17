@@ -32,13 +32,14 @@ service_name="ros-humble"
 workspace_root="/workspace/goat_racer"
 workspace_dir="$workspace_root/ros_ws"
 build_root="$workspace_dir"
-manifest_path="$workspace_root/goat_racer.repos"
+workspace_source_roots=(
+  /workspace/goat_racer/external
+  /workspace/goat_racer/ros_ws/src
+)
 legacy_goat_ros_path="$repo_root/ros_ws/src/.git"
 canonical_goat_ros_path="$repo_root/ros_ws/src/goat_ros/.git"
-base_paths=(
-  /workspace/goat_racer/external/goat_vesc
-  /workspace/goat_racer/ros_ws/src/goat_ros
-)
+legacy_isaac_ros_common_path="$repo_root/ros_ws/src/isaac_ros_common/.git"
+canonical_isaac_ros_common_path="$repo_root/ros_ws/src/isaac_ros/isaac_ros_common/.git"
 
 usage() {
   cat <<'EOF'
@@ -89,6 +90,15 @@ Move the existing checkout into ros_ws/src/goat_ros or remove ros_ws/src and rer
 EOF
     exit 1
   fi
+
+  if [[ -d "$legacy_isaac_ros_common_path" && ! -d "$canonical_isaac_ros_common_path" ]]; then
+    cat >&2 <<'EOF'
+Legacy isaac_ros_common checkout detected at ros_ws/src/isaac_ros_common.
+The canonical nested repository path is ros_ws/src/isaac_ros/isaac_ros_common.
+Move the existing checkout into ros_ws/src/isaac_ros/isaac_ros_common or remove ros_ws/src/isaac_ros_common and rerun scripts/ros bootstrap.
+EOF
+    exit 1
+  fi
 }
 
 is_running() {
@@ -125,7 +135,7 @@ case "$command" in
     ensure_running
     trap cleanup_container EXIT
     run_in_container \
-      "set -eo pipefail; source /opt/ros/humble/setup.bash; set -u; cd '$workspace_dir'; colcon --log-base '$build_root/log' build --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+ \"\$@\"" \
+      "set -eo pipefail; source /opt/ros/humble/setup.bash; set -u; cd '$workspace_dir'; colcon --log-base '$build_root/log' build --base-paths ${workspace_source_roots[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+ \"\$@\"" \
       "$@"
     ;;
   test)
@@ -133,7 +143,7 @@ case "$command" in
     ensure_running
     trap cleanup_container EXIT
     run_in_container \
-      "set -eo pipefail; source /opt/ros/humble/setup.bash; cd '$workspace_dir'; colcon --log-base '$build_root/log' build --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+; source '$build_root/install/setup.bash'; set -u; colcon --log-base '$build_root/log' test --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+ --return-code-on-test-failure \"\$@\"; colcon test-result --test-result-base '$build_root/build' --verbose" \
+      "set -eo pipefail; source /opt/ros/humble/setup.bash; cd '$workspace_dir'; colcon --log-base '$build_root/log' build --base-paths ${workspace_source_roots[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+; source '$build_root/install/setup.bash'; set -u; colcon --log-base '$build_root/log' test --base-paths ${workspace_source_roots[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+ --return-code-on-test-failure \"\$@\"; colcon test-result --test-result-base '$build_root/build' --verbose" \
       "$@"
     ;;
   bootstrap)
@@ -141,7 +151,7 @@ case "$command" in
     ensure_running
     trap cleanup_container EXIT
     run_in_container \
-      "set -eo pipefail; source /opt/ros/humble/setup.bash; set -u; cd '$workspace_root'; git config --global --add safe.directory '$workspace_root'; if [[ -d '$workspace_root/external/goat_vesc/.git' ]]; then git config --global --add safe.directory '$workspace_root/external/goat_vesc'; fi; if [[ -d '$workspace_root/ros_ws/src/goat_ros/.git' ]]; then git config --global --add safe.directory '$workspace_root/ros_ws/src/goat_ros'; fi; vcs import '$workspace_root' < '$manifest_path'; rosdep update; rosdep install --from-paths '$workspace_root/external/goat_vesc' '$workspace_root/ros_ws/src/goat_ros' --ignore-src -t build -t build_export -t buildtool -t buildtool_export -t exec --rosdistro humble -r -y; cd '$workspace_dir'; colcon --log-base '$build_root/log' build --base-paths ${base_paths[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+; echo; echo 'Bootstrap complete. Next step: scripts/demo'" \
+      "set -eo pipefail; source /opt/ros/humble/setup.bash; set -u; cd '$workspace_root'; git config --global --add safe.directory '$workspace_root'; while IFS= read -r git_dir; do git config --global --add safe.directory \"\$(dirname \"\$git_dir\")\"; done < <(find '$workspace_root/external' '$workspace_root/ros_ws/src' -mindepth 1 -maxdepth 4 -type d -name .git 2>/dev/null | sort || true); mapfile -t manifest_paths < <(find '$workspace_root' -maxdepth 1 -type f -name '*.repos' | sort); if [[ \${#manifest_paths[@]} -eq 0 ]]; then echo 'No .repos manifests found at workspace root.' >&2; exit 1; fi; for manifest_path in \"\${manifest_paths[@]}\"; do echo \"Importing repositories from \$manifest_path\"; vcs import '$workspace_root' < \"\$manifest_path\"; done; rosdep update; rosdep install --from-paths ${workspace_source_roots[*]} --ignore-src -t build -t build_export -t buildtool -t buildtool_export -t exec --rosdistro humble -r -y; cd '$workspace_dir'; colcon --log-base '$build_root/log' build --base-paths ${workspace_source_roots[*]} --build-base '$build_root/build' --install-base '$build_root/install' --event-handlers console_direct+; echo; echo 'Bootstrap complete. Next step: scripts/demo'" \
       "$@"
     ;;
   *)

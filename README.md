@@ -28,8 +28,13 @@ cd goat_racer
 ./scripts/ros bootstrap
 ```
 
-`scripts/ros bootstrap` imports the nested repositories defined in
-`goat_racer.repos`, installs ROS dependencies, and builds the workspace.
+`scripts/ros bootstrap` imports every root-level `.repos` manifest, installs
+ROS dependencies across the workspace roots, and builds the workspace.
+
+The GOAT sources live in `goat_racer.repos`. NVIDIA Isaac ROS sources live in
+`isaac_ros.repos` and are checked out under `ros_ws/src/isaac_ros`.
+`isaac_ros_common` tracks the `release-3.2` branch so the workspace stays on
+the JetPack 6.2 and ROS 2 Humble support line.
 
 Before running the demo, update
 `ros_ws/src/goat_ros/goat_ros_drivers/goat_vesc_ros/config/goat_vesc.yaml` so
@@ -101,4 +106,4 @@ from the host.
 
 - Detailed ROS package docs live in [ros_ws/src/goat_ros/README.md](/home/erik/goat/goat_racer/ros_ws/src/goat_ros/README.md).
 - Detailed `goat_vesc` docs live in [external/goat_vesc/README.md](/home/erik/goat/goat_racer/external/goat_vesc/README.md).
-- The nested checkout manifest lives in [goat_racer.repos](/home/erik/goat/goat_racer/goat_racer.repos).
+- The nested checkout manifests live in [goat_racer.repos](/home/erik/goat/goat_racer/goat_racer.repos) and [isaac_ros.repos](/home/erik/goat/goat_racer/isaac_ros.repos).
