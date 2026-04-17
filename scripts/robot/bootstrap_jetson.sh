@@ -22,8 +22,8 @@ cat <<'EOF'
 Stage 1 does not automate Jetson bootstrap yet.
 
 Recommended manual baseline:
-1. Install Docker Engine and the docker compose plugin.
+1. Install Docker Engine and NVIDIA Container Toolkit support.
 2. Ensure Jetson NVIDIA container runtime support is available on the host.
 3. Run ./scripts/robot/audit_jetson.sh to capture the current host state.
-4. Start the project dev container with ./scripts/dev/enter.sh.
+4. Start the Isaac ROS dev container with ./scripts/dev/enter.sh.
 EOF

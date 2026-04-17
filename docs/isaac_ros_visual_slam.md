@@ -2,32 +2,21 @@
 
 ## Purpose
 
-This guide covers the current GOAT bringup path for Isaac ROS Visual SLAM on
-Jetson Orin Nano with a RealSense D435 first in stereo-only mode, then with the
-ESC IMU fused into Visual SLAM.
-
-## Status
-
-This document predates the Stage 1 move to the project-owned `goat-dev`
-container. Use `./scripts/dev/sync_repos.sh`, `./scripts/dev/enter.sh`,
-`./scripts/dev/rosdep_install.sh`, and `./scripts/dev/build_ws.sh` as the
-current repo entrypoints.
-
-Some runtime-specific Visual SLAM notes below still describe the manual
-upstream Isaac ROS workflow and should be treated as bringup notes rather than
-the primary repository workflow.
+This is the Stage 2A baseline bringup guide for Isaac ROS Visual SLAM. The goal
+is to use Isaac ROS tooling directly, keep the workspace readable, and document
+one clean upstream example path plus one clean GOAT wrapper path.
 
 ## Requirements
 
-- Jetson Orin Nano on JetPack 6.2
-- ROS 2 Humble
-- D435 connected before starting the Isaac ROS dev container
-- ESC IMU available through `goat_vesc_ros`
+- Jetson Orin Nano on JetPack 6.2 or another Isaac ROS 3.2-capable host
 - Docker access on the host
+- `git-lfs`
+- `vcs`
+- D435 connected before launching the container
 
-## Known-Good NVIDIA Dev Lane
+## Prepare The Workspace
 
-Prepare the workspace first:
+From the repo root:
 
 ```bash
 ./scripts/dev/sync_repos.sh
@@ -35,115 +24,73 @@ Prepare the workspace first:
 ./scripts/dev/build_ws.sh
 ```
 
-Configure `isaac_ros_common` for the RealSense-capable image:
+Enter the Isaac ROS dev container when you want an interactive shell:
 
 ```bash
-cd ros_ws/src/isaac_ros/isaac_ros_common/scripts
-echo CONFIG_IMAGE_KEY=ros2_humble.realsense > .isaac_ros_common-config
+./scripts/dev/enter.sh
 ```
 
-If a tutorial still requires the upstream NVIDIA runtime container, launch it
-manually from the repo root:
+`./scripts/dev/enter.sh` sources the repo-owned
+[.isaac_ros_common-config](/home/goat/goat/goat_racer/.isaac_ros_common-config)
+and then calls upstream `isaac_ros_common/scripts/run_dev.sh -d /path/to/repo`.
+
+## Launch Target 1: Upstream Isaac ROS Example
+
+Inside the container:
 
 ```bash
-cd /home/goat/goat/goat_racer/ros_ws/src/isaac_ros/isaac_ros_common
-./scripts/run_dev.sh -d /home/goat/goat/goat_racer
-```
-
-Inside that container, install the Isaac ROS binary runtime packages needed by
-the GOAT launch files:
-
-```bash
-apt-get update
-apt-get install -y \
-  ros-humble-isaac-ros-launch-utils \
-  ros-humble-isaac-ros-test \
-  ros-humble-isaac-ros-visual-slam \
-  ros-humble-realsense2-camera
-```
-
-Build the GOAT ROS packages in that environment:
-
-```bash
-cd /workspaces/isaac_ros-dev/ros_ws
 source /opt/ros/humble/setup.bash
-colcon build \
-  --base-paths /workspaces/isaac_ros-dev/external /workspaces/isaac_ros-dev/ros_ws/src \
-  --packages-select goat_vesc goat_vesc_ros goat_teleop goat_ros_launch \
-  --packages-ignore isaac_common isaac_ros_launch_utils isaac_ros_test isaac_ros_visual_slam isaac_ros_visual_slam_interfaces
 source /workspaces/isaac_ros-dev/ros_ws/install/setup.bash
+ros2 launch isaac_ros_visual_slam isaac_ros_visual_slam_realsense.launch.py
 ```
 
-## Bench Bringup
+This is the supported Isaac ROS RealSense example path and should be the first
+baseline check when you want to confirm the Isaac side is healthy.
 
-Start stereo-only Visual SLAM:
+## Launch Target 2: GOAT Sensor Wrapper
+
+Inside the container:
 
 ```bash
-ros2 launch goat_ros_launch goat_d435_visual_slam.launch.py
+source /opt/ros/humble/setup.bash
+source /workspaces/isaac_ros-dev/ros_ws/install/setup.bash
+ros2 launch goat_ros_launch sensors.launch.py
 ```
 
-When the camera or IMU transforms are known, pass them explicitly:
+Or from the host:
 
 ```bash
-ros2 launch goat_ros_launch goat_d435_visual_slam.launch.py \
-  camera_x:=0.10 camera_z:=0.22 \
-  imu_x:=0.03 imu_z:=0.06 imu_yaw:=1.57
+./scripts/ops/run_vslam.sh
 ```
 
-## Visual-Inertial Bringup
-
-Start `goat_vesc_ros` with the Visual SLAM-oriented IMU frame ID and covariance
-preset:
+The GOAT wrapper uses the package-installed default config at
+`goat_ros_launch/config/sensors.yaml` and keeps CLI override support:
 
 ```bash
-ros2 launch goat_vesc_ros goat_vesc.launch.py \
-  config_file:=$(ros2 pkg prefix goat_vesc_ros --share)/config/goat_vesc_isaac_vslam.yaml
+ros2 launch goat_ros_launch sensors.launch.py \
+  config_file:=/path/to/alternate_sensors.yaml
 ```
 
-In a second terminal, start Visual SLAM with IMU fusion enabled:
+If you pass a bad config path, `sensors.launch.py` should fail clearly before it
+tries to include the wrapped launch file.
+
+## What To Check
+
+- The D435 appears inside the Isaac ROS container.
+- `/visual_slam/tracking/odometry` publishes once the camera is moving.
+- The upstream example starts without repo-specific wrapper logic.
+- The GOAT wrapper starts with no extra launch arguments.
+
+Quick spot checks:
 
 ```bash
-ros2 launch goat_ros_launch goat_d435_visual_slam.launch.py \
-  enable_imu_fusion:=true
+ros2 topic list | grep visual_slam
+ros2 topic echo /visual_slam/tracking/odometry --once
 ```
-
-## GOAT Robot Bringup
-
-Stereo-only full robot bringup:
-
-```bash
-ros2 launch goat_ros_launch robot_d435_visual_slam.launch.py
-```
-
-Visual-inertial full robot bringup:
-
-```bash
-ros2 launch goat_ros_launch robot_d435_visual_slam_vio.launch.py
-```
-
-Forward custom sensor launch arguments through the canonical robot entrypoint:
-
-```bash
-ros2 launch goat_ros_launch robot.launch.py \
-  sensor_launch_file:=$(ros2 pkg prefix goat_ros_launch --share)/launch/goat_d435_visual_slam.launch.py \
-  sensor_launch_arguments:="enable_imu_fusion:=true camera_x:=0.10 camera_z:=0.22 imu_yaw:=1.57" \
-  vesc_config_file:=$(ros2 pkg prefix goat_vesc_ros --share)/config/goat_vesc_isaac_vslam.yaml
-```
-
-## Validation Checklist
-
-- D435 appears reliably in the Isaac ROS dev container.
-- `/stereo/left/*` and `/stereo/right/*` publish rectified IR images and camera info.
-- `/visual_slam/tracking/odometry` and TF update while moving the camera.
-- `/imu/data_raw` publishes host-stamped `sensor_msgs/msg/Imu`.
-- `base_link -> camera_link` and `base_link -> esc_imu_link` resolve in TF.
-- VIO runs without frame or timestamp errors after `enable_imu_fusion:=true`.
 
 ## Limits
 
-- The D435 remains an in-scope bringup target even though NVIDIA officially
-  documents D455 and D435i on the `release-3.2` line.
-- The default `camera_*` and `imu_*` transforms are zeroed for bench bringup.
-  Replace them with measured or calibrated transforms before robot evaluation.
-- `goat_vesc_isaac_vslam.yaml` uses bench-only IMU covariance placeholders.
-  Replace them with measured values before production use.
+- This stage does not make teleop, VESC, robot-level bringup, rosbag helpers,
+  or VIO part of the primary success path.
+- The GOAT D435 wrapper keeps zeroed default static transforms for bench
+  testing; replace them with measured transforms before robot evaluation.

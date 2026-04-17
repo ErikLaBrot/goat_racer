@@ -6,42 +6,24 @@
 #   workspace paths owned by the root `.repos` manifests.
 #
 # Inputs:
-#   Docker with `docker compose`, the root `*.repos` files, and an optional
-#   `GOAT_ENV_FILE` override.
+#   Host-side `vcs`, `git`, and the root `*.repos` manifest files.
 #
 # Outputs:
 #   Creates or updates nested repositories under `external/` and `ros_ws/src/`.
 #
 # Usage:
 #   ./scripts/dev/sync_repos.sh
-#   GOAT_ENV_FILE=docker/env/amd64.env ./scripts/dev/sync_repos.sh
 #
 # Notes:
 #   Manifest paths are treated as the source of truth for repository placement.
 set -euo pipefail
 
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-ensure_running
-
-container_script=$(cat <<'EOF'
-set -euo pipefail
-
-repo_root="/workspace/goat_racer"
-mkdir -p "$repo_root/external" "$repo_root/ros_ws/src"
-
-register_safe_directories() {
-  git config --global --add safe.directory "$repo_root"
-
-  while IFS= read -r git_dir; do
-    git config --global --add safe.directory "$(dirname "$git_dir")"
-  done < <(
-    find "$repo_root/external" "$repo_root/ros_ws/src" \
-      -mindepth 1 -maxdepth 4 -type d -name .git 2>/dev/null | sort
-  )
-}
-
-register_safe_directories
+if ! command -v vcs >/dev/null 2>&1; then
+  echo "vcs was not found on the host. Install python3-vcstool and try again." >&2
+  exit 1
+fi
 
 mapfile -t manifests < <(find "$repo_root" -maxdepth 1 -type f -name '*.repos' | sort)
 if [[ ${#manifests[@]} -eq 0 ]]; then
@@ -49,28 +31,35 @@ if [[ ${#manifests[@]} -eq 0 ]]; then
   exit 1
 fi
 
+repo_dirs=()
 for manifest in "${manifests[@]}"; do
   echo "Importing repositories from ${manifest##*/}..."
   vcs import "$repo_root" < "$manifest"
+
+  while IFS= read -r repo_path; do
+    [[ -n "$repo_path" ]] || continue
+    repo_dirs+=("$repo_root/$repo_path")
+  done < <(sed -n 's/^  \([^:][^:]*\):$/\1/p' "$manifest")
 done
 
-register_safe_directories
-
-roots=()
-for candidate in "$repo_root/external" "$repo_root/ros_ws/src"; do
-  if find "$candidate" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
-    roots+=("$candidate")
+deduped_repo_dirs=()
+for repo_dir in "${repo_dirs[@]}"; do
+  skip_dir=0
+  for seen_dir in "${deduped_repo_dirs[@]}"; do
+    if [[ "$seen_dir" == "$repo_dir" ]]; then
+      skip_dir=1
+      break
+    fi
+  done
+  if [[ $skip_dir -eq 0 && -d "$repo_dir" ]]; then
+    deduped_repo_dirs+=("$repo_dir")
   fi
 done
 
-if [[ ${#roots[@]} -eq 0 ]]; then
+if [[ ${#deduped_repo_dirs[@]} -eq 0 ]]; then
   echo "No nested repositories were imported."
   exit 0
 fi
 
-echo "Pulling existing nested repositories..."
-vcs pull "${roots[@]}"
-EOF
-)
-
-run_in_container "$container_script"
+echo "Pulling manifest-managed repositories..."
+vcs pull "${deduped_repo_dirs[@]}"

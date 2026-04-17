@@ -24,7 +24,7 @@ record_bag.sh is a Stage 1 placeholder.
 For now:
 1. Enter the dev container with ./scripts/dev/enter.sh
 2. Run ros2 bag record manually
-3. Write bags under /workspace/goat_racer/ros_ws/bags
+3. Write bags under /workspaces/isaac_ros-dev/ros_ws/bags
 EOF
 
 exit 1

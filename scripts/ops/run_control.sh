@@ -21,8 +21,8 @@ cat <<'EOF'
 run_control.sh is a Stage 1 placeholder.
 
 The control launch path has not been wired in this repo yet.
-Use ./scripts/dev/enter.sh to work inside the shared container while bringup
-entrypoints are finalized.
+Use ./scripts/dev/enter.sh to work inside the Isaac ROS dev container while
+bringup entrypoints are finalized.
 EOF
 
 exit 1

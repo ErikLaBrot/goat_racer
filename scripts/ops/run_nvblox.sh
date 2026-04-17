@@ -21,7 +21,7 @@ set -euo pipefail
 cat <<'EOF'
 run_nvblox.sh is a Stage 1 placeholder.
 
-Stage 1 only establishes the shared container and workspace layout.
+Stage 2A only establishes the Isaac ROS Visual SLAM baseline.
 NVBlox launch automation will be added in a later task.
 EOF
 

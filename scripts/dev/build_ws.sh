@@ -2,8 +2,8 @@
 # Build the GOAT ROS workspace inside the development container.
 #
 # Purpose:
-#   Run a standard `colcon build --symlink-install` from `ros_ws` using the
-#   project dev container.
+#   Run the focused Stage 2A workspace build inside the Isaac ROS dev
+#   container.
 #
 # Inputs:
 #   Optional extra `colcon build` arguments.
@@ -13,26 +13,20 @@
 #
 # Usage:
 #   ./scripts/dev/build_ws.sh
-#   ./scripts/dev/build_ws.sh --packages-up-to goat_ros_launch
+#   ./scripts/dev/build_ws.sh --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 #
 # Notes:
-#   Requires a synced workspace with at least one ROS package under `ros_ws/src`.
-set -eo pipefail
+#   Defaults to the minimum Stage 2A package set for Visual SLAM bringup.
+set -euo pipefail
 
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-ensure_running
+exec "$repo_root/scripts/dev/enter.sh" -lc '
+set -e
 
-container_script=$(cat <<'EOF'
-set -eo pipefail
+workspace_dir="/workspaces/isaac_ros-dev/ros_ws"
 
-ros_setup="/opt/ros/${ROS_DISTRO:-humble}/setup.bash"
-workspace_dir="/workspace/goat_racer/ros_ws"
-
-if [[ -f "$ros_setup" ]]; then
-  # shellcheck disable=SC1090
-  source "$ros_setup"
-fi
+source /opt/ros/humble/setup.bash
 
 if ! find "$workspace_dir/src" -name package.xml -print -quit | grep -q .; then
   echo "No ROS packages found under $workspace_dir/src. Run ./scripts/dev/sync_repos.sh first." >&2
@@ -40,13 +34,5 @@ if ! find "$workspace_dir/src" -name package.xml -print -quit | grep -q .; then
 fi
 
 cd "$workspace_dir"
-if [[ -d /usr/local/cuda ]]; then
-  echo "CUDA toolkit detected at ${CUDA_TOOLKIT_ROOT_DIR:-/usr/local/cuda}"
-else
-  echo "CUDA toolkit not found at /usr/local/cuda"
-fi
-colcon build --symlink-install "$@"
-EOF
-)
-
-run_in_container "$container_script" "$@"
+colcon build --symlink-install --packages-up-to isaac_ros_visual_slam goat_ros_launch "$@"
+' bash "$@"
