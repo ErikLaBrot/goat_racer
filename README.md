@@ -1,169 +1,66 @@
 # goat_racer
 
-## Description
+`goat_racer` is the top-level orchestration repository for the GOAT robot
+workspace. It owns the project-native Isaac ROS development container, the
+workspace layout under `ros_ws`, and the small helper scripts used to sync,
+prepare, and build the source tree.
 
-`goat_racer` is the top-level orchestration repository for the GOAT racer
-workspace. It owns the shared Docker-based ROS workflow, the nested checkout
-bootstrap, and the top-level helper scripts used to build, test, and run the
-canonical robot bringup demo across Ubuntu workstation and Jetson deployment
-targets.
-
-Detailed package and implementation docs live in the nested repositories, not
-in this README.
+This repository intentionally does not use NVIDIA `run_dev.sh` as its primary
+entrypoint. Instead, the project uses one Compose-backed dev container service
+named `goat-dev` so GOAT packages and Isaac ROS packages live in the same
+workspace and container.
 
 ## Requirements
 
-- Docker with `docker compose`
+- Docker with the `docker compose` plugin
 - Permission to run Docker commands on the host
 
-The shared container provides ROS tooling, `vcstool`, and `rosdep`, so a host
-ROS install is not required.
+## Developer Workflow
 
-The Docker setup uses a shared base compose file plus one target overlay:
+1. Clone the repository.
+2. Sync nested repositories:
 
-- `docker/compose.yaml`
-  Shared service settings used by every host.
-- `docker/compose.workstation.yaml`
-  Native Ubuntu workstation target (`amd64`).
-- `docker/compose.jetson.yaml`
-  Native Jetson target (`arm64`).
+   ```bash
+   ./scripts/dev/sync_repos.sh
+   ```
 
-Helper scripts default to the Jetson target. Use `GOAT_TARGET=workstation`
-when running the secondary Ubuntu workstation dev/debug flow.
+3. Open the repo in the VS Code devcontainer or attach from a terminal:
 
-The Jetson Dockerfile uses an `arm64` ROS Humble base image so the container
-builds natively on Jetson hosts.
+   ```bash
+   ./scripts/dev/enter.sh
+   ```
 
-## Install
+4. Install workspace dependencies:
 
-Clone the repo and bootstrap the workspace:
+   ```bash
+   ./scripts/dev/rosdep_install.sh
+   ```
 
-```bash
-git clone https://github.com/ErikLaBrot/goat_racer.git
-cd goat_racer
-./scripts/ros bootstrap
-```
+5. Build the workspace:
 
-`scripts/ros bootstrap` imports every root-level `.repos` manifest, installs
-ROS dependencies across the workspace roots, and builds the workspace.
+   ```bash
+   ./scripts/dev/build_ws.sh
+   ```
 
-The GOAT sources live in `goat_racer.repos`. NVIDIA Isaac ROS sources live in
-`isaac_ros.repos` and are checked out under `ros_ws/src/isaac_ros`.
-The manifest currently includes `isaac_ros_common`, `isaac_ros_visual_slam`,
-and `isaac_ros_nvblox`, all on the `release-3.2` branch so the workspace stays
-on the JetPack 6.2 and ROS 2 Humble support line.
-
-The current `goat_racer.repos` branch pin also pulls the in-flight
-`goat_ros` Visual SLAM bringup branch so fresh bootstraps pick up the new D435
-and ESC IMU launch/config changes while this work is under review.
-
-`isaac_ros_visual_slam` and `isaac_ros_nvblox` also depend on additional Isaac
-ROS source packages such as the GXF and NITROS stacks, so this manifest is the
-initial repository set rather than the complete transitive Isaac ROS source
-closure.
-
-On an Ubuntu workstation, select the secondary dev/debug target explicitly:
+The helper scripts default to the Jetson-oriented environment file at
+`docker/env/jetson.env`. To try the placeholder amd64 lane instead, override
+`GOAT_ENV_FILE`:
 
 ```bash
-GOAT_TARGET=workstation ./scripts/ros bootstrap
+GOAT_ENV_FILE=docker/env/amd64.env ./scripts/dev/enter.sh
 ```
 
-Before running the demo, update
-`ros_ws/src/goat_ros/goat_ros_drivers/goat_vesc_ros/config/goat_vesc.yaml` so
-`device_path` points at the correct VESC interface.
+## Layout
 
-## Isaac ROS Visual SLAM
+- `ros_ws/` is the main ROS workspace root.
+- `ros_ws/src/goat_ros` is reserved for GOAT ROS packages.
+- `ros_ws/src/isaac_ros` is reserved for Isaac ROS source checkouts.
+- `external/` is reserved for non-ROS project dependencies.
+- `docker/` contains the project Dockerfile, Compose file, entrypoint, and
+  environment presets.
 
-GOAT now includes D435-oriented Isaac ROS Visual SLAM entrypoints in
-`goat_ros_launch`, including a stereo-only bench launch and a VIO-oriented
-robot wrapper that uses the ESC IMU.
+## Additional Docs
 
-The shared `docker/compose.yaml` container is still the generic GOAT build
-environment. Use the NVIDIA `isaac_ros_common/scripts/run_dev.sh` workflow for
-the RealSense and Isaac ROS runtime packages, then build or launch the GOAT
-Visual SLAM path from there.
-
-The full setup, launch, and validation flow lives in
-[docs/isaac_ros_visual_slam.md](/home/goat/goat/goat_racer/docs/isaac_ros_visual_slam.md).
-
-## Demo
-
-Run the canonical robot bringup demo with:
-
-```bash
-./scripts/demo
-```
-
-On an Ubuntu workstation, select the workstation overlay explicitly:
-
-```bash
-GOAT_TARGET=workstation ./scripts/demo
-```
-
-Launch overrides are forwarded to `goat_ros_launch robot.launch.py`:
-
-```bash
-./scripts/demo joy_dev:=/dev/input/js1 deadzone:=0.02
-```
-
-Record an MCAP rosbag using one of the installed topic profiles:
-
-```bash
-./scripts/demo record:=true record_profile:=slam
-```
-
-Demo recordings default to `ros_ws/bags` on the host, which is mounted inside
-the ROS container as `/workspace/goat_racer/ros_ws/bags`. Use a launch override
-when a single run needs another container-visible directory:
-
-```bash
-./scripts/demo record:=true bag_dir:=/workspace/goat_racer/ros_ws/bags/demo
-```
-
-Use `GOAT_ROSBAG_DIR` when you want to change the top-level default without
-typing `bag_dir` each time. Relative values are resolved from the repo root and
-passed into the container through the workspace mount:
-
-```bash
-GOAT_ROSBAG_DIR=ros_ws/bags/demo ./scripts/demo record:=true
-```
-
-Replay a saved bag from the same mounted location:
-
-```bash
-docker compose -f docker/compose.yaml -f docker/compose.jetson.yaml run --rm ros-humble bash -lc \
-  'source /opt/ros/humble/setup.bash && \
-   source /workspace/goat_racer/ros_ws/install/setup.bash && \
-   ros2 launch goat_ros_launch replay.launch.py \
-     bag_path:=/workspace/goat_racer/ros_ws/bags/<bag_name>'
-```
-
-Swap in `docker/compose.workstation.yaml` or set `GOAT_TARGET=workstation` in
-the helper scripts when running on the Ubuntu workstation dev/debug host.
-
-This change only separates workstation and Jetson host targets. It does not yet
-add Jetson-specific NVIDIA runtime flags, GUI/display forwarding, or additional
-hardware mounts beyond the shared base container configuration.
-
-Full demo behavior depends on the target hardware being connected and reachable
-from the host.
-
-## Scripts
-
-- `scripts/ros bootstrap`
-  Populate nested repos, install ROS dependencies, and build the workspace.
-- `scripts/ros build --packages-up-to goat_ros_launch`
-  Build the main GOAT workspace packages inside the shared container.
-- `scripts/ros test --packages-select goat_ros_launch`
-  Build, test, and print test results for the main GOAT workspace packages.
-- `scripts/ros down`
-  Stop and remove the shared ROS container.
-- `scripts/demo`
-  Launch `goat_ros_launch robot.launch.py` from the built workspace.
-
-## Notes
-
-- Detailed ROS package docs live in [ros_ws/src/goat_ros/README.md](/home/goat/goat/goat_racer/ros_ws/src/goat_ros/README.md).
-- Detailed `goat_vesc` docs live in [external/goat_vesc/README.md](/home/goat/goat/goat_racer/external/goat_vesc/README.md).
-- The Visual SLAM bringup guide lives in [docs/isaac_ros_visual_slam.md](/home/goat/goat/goat_racer/docs/isaac_ros_visual_slam.md).
-- The nested checkout manifests live in [goat_racer.repos](/home/goat/goat/goat_racer/goat_racer.repos) and [isaac_ros.repos](/home/goat/goat/goat_racer/isaac_ros.repos).
+- [Devcontainer workflow](/home/goat/goat/goat_racer/docs/devcontainer_workflow.md)
+- [Version matrix](/home/goat/goat/goat_racer/docs/version_matrix.md)
+- [Isaac ROS Visual SLAM notes](/home/goat/goat/goat_racer/docs/isaac_ros_visual_slam.md)

@@ -1,12 +1,9 @@
 /ros_ws/build/
+/ros_ws/install/
+/ros_ws/log/
 /ros_ws/bags/*
 !/ros_ws/bags/
 !/ros_ws/bags/README.md
-/ros_ws/install/
-/ros_ws/log/
-/ros_ws/src/goat_ros/
-/ros_ws/src/isaac_ros/
-/external/
 /log/
 /.vscode/
 __pycache__/

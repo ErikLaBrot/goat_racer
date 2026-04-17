@@ -1,8 +1,0 @@
-services:
-  ros-humble:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.ros-humble.jetson
-    image: goat-ros2-humble-jetson-dev
-    container_name: goat-ros2-humble-jetson-dev
-    platform: linux/arm64
