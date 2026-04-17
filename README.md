@@ -1,18 +1,15 @@
 # goat_racer
 
 `goat_racer` is the top-level orchestration repository for the GOAT robot
-workspace. It owns the project-native Isaac ROS development container, the
-workspace layout under `ros_ws`, and the small helper scripts used to sync,
-prepare, and build the source tree.
-
-This repository intentionally does not use NVIDIA `run_dev.sh` as its primary
-entrypoint. Instead, the project uses one Compose-backed dev container service
-named `goat-dev` so GOAT packages and Isaac ROS packages live in the same
-workspace and container.
+workspace. It keeps GOAT-owned ROS packages separate from the vendored Isaac
+ROS source tree and provides a small set of helper scripts that call Isaac
+ROS tooling directly.
 
 ## Requirements
 
-- Docker with the `docker compose` plugin
+- Docker with NVIDIA runtime support on the target host
+- `git-lfs`
+- `vcs`
 - Permission to run Docker commands on the host
 
 ## Developer Workflow
@@ -42,13 +39,25 @@ workspace and container.
    ./scripts/dev/build_ws.sh
    ```
 
-The helper scripts default to the Jetson-oriented environment file at
-`docker/env/jetson.env`. To try the placeholder amd64 lane instead, override
-`GOAT_ENV_FILE`:
+6. Launch Visual SLAM:
 
-```bash
-GOAT_ENV_FILE=docker/env/amd64.env ./scripts/dev/enter.sh
-```
+   Upstream Isaac ROS RealSense example:
+
+   ```bash
+   ros2 launch isaac_ros_visual_slam isaac_ros_visual_slam_realsense.launch.py
+   ```
+
+   GOAT sensor wrapper path:
+
+   ```bash
+   ./scripts/ops/run_vslam.sh
+   ```
+
+`./scripts/dev/enter.sh` is the primary way to enter the dev environment. It
+sources the repo-owned [.isaac_ros_common-config](/home/goat/goat/goat_racer/.isaac_ros_common-config)
+and then execs upstream `isaac_ros_common/scripts/run_dev.sh -d <repo-root>`.
+Compose and devcontainer assets may remain in the repo for later work, but they
+are not the Stage 2A primary workflow.
 
 ## Layout
 
@@ -56,8 +65,8 @@ GOAT_ENV_FILE=docker/env/amd64.env ./scripts/dev/enter.sh
 - `ros_ws/src/goat_ros` is reserved for GOAT ROS packages.
 - `ros_ws/src/isaac_ros` is reserved for Isaac ROS source checkouts.
 - `external/` is reserved for non-ROS project dependencies.
-- `docker/` contains the project Dockerfile, Compose file, entrypoint, and
-  environment presets.
+- `docker/` and `.devcontainer/` contain secondary Stage 1 assets that are not
+  the primary Stage 2A workflow.
 
 ## Additional Docs
 

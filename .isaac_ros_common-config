@@ -1,0 +1,2 @@
+CONFIG_IMAGE_KEY=ros2_humble.realsense
+CONFIG_CONTAINER_NAME_SUFFIX=goat_racer

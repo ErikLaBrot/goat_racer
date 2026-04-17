@@ -1,40 +1,33 @@
 # Devcontainer Workflow
 
-`goat_racer` uses a project-owned Isaac ROS development container so the repo
-controls Docker, Compose, entrypoint behavior, and the mounted workspace
-layout.
+This document is secondary to the Stage 2A Isaac ROS workflow.
 
-## Why This Layout Exists
+The supported Stage 2A path is:
 
-- `ros_ws` stays the single workspace root.
-- GOAT packages and Isaac ROS packages live in the same container and
-  filesystem view.
-- VS Code and terminal users enter the same `goat-dev` service.
-- NVIDIA `run_dev.sh` is no longer the primary entry mechanism for this repo.
+1. `./scripts/dev/sync_repos.sh`
+2. `./scripts/dev/enter.sh`
+3. `./scripts/dev/rosdep_install.sh`
+4. `./scripts/dev/build_ws.sh`
 
-## Main Entry Points
+Those repo helpers call Isaac ROS tooling directly. They do not rely on Docker
+Compose as the primary container workflow.
 
-- VS Code: open the repository and choose "Reopen in Container".
-- Terminal: run `./scripts/dev/enter.sh`.
+## Current Status
 
-Both paths enter the same Compose service defined in
-[docker/compose.dev.yaml](/home/goat/goat/goat_racer/docker/compose.dev.yaml).
+- `.devcontainer/` and `docker/compose.dev.yaml` are leftover Stage 1 assets.
+- They may still be useful for experiments or future editor integration work.
+- They are not the source of truth for container launch, image selection, or
+  day-to-day bringup in Stage 2A.
 
-## Typical Flow
+## If You Still Use It
 
-1. Sync nested repositories with `./scripts/dev/sync_repos.sh`.
-2. Open the devcontainer or attach with `./scripts/dev/enter.sh`.
-3. Install dependencies with `./scripts/dev/rosdep_install.sh`.
-4. Build the workspace with `./scripts/dev/build_ws.sh`.
-
-The helper scripts default to
-[docker/env/jetson.env](/home/goat/goat/goat_racer/docker/env/jetson.env).
-Use `GOAT_ENV_FILE=docker/env/amd64.env` when you want to try the placeholder
-amd64 lane.
+If you open the repo in VS Code and choose "Reopen in Container", treat that as
+a secondary workflow. The supported command-line flow still uses
+`./scripts/dev/enter.sh`, which delegates to Isaac ROS `run_dev.sh`.
 
 ## Workspace Layout
 
 - `ros_ws/src/goat_ros` for project ROS packages
 - `ros_ws/src/isaac_ros` for Isaac ROS source repositories
 - `external/` for non-ROS dependencies
-- `ros_ws/bags` for host-mounted bag output
+- `ros_ws/bags` for rosbag output when you choose to record manually

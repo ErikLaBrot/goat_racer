@@ -1,33 +1,46 @@
 #!/usr/bin/env bash
-# Enter the GOAT development container from a terminal.
+# Enter the Isaac ROS development container from the repo root.
 #
 # Purpose:
-#   Start the `goat-dev` service when needed and open an interactive shell or
-#   run a command inside it without relying on the VS Code UI.
+#   Source the repo-owned Isaac ROS container config and hand off directly to
+#   NVIDIA's `run_dev.sh` for container build, launch, and attach behavior.
 #
 # Inputs:
-#   Optional command arguments and an optional `GOAT_ENV_FILE` override.
+#   Optional `/bin/bash` arguments passed through to the upstream Isaac ROS
+#   dev-container entrypoint.
 #
 # Outputs:
-#   Starts the dev container if needed and attaches the current terminal to it.
+#   Reuses or launches the Isaac ROS dev container for this repository.
 #
 # Usage:
 #   ./scripts/dev/enter.sh
-#   ./scripts/dev/enter.sh bash -lc 'colcon list'
-#   GOAT_ENV_FILE=docker/env/amd64.env ./scripts/dev/enter.sh
+#   ./scripts/dev/enter.sh -lc 'colcon list'
 #
 # Notes:
-#   Defaults to the Jetson-oriented environment file.
+#   This is the primary Stage 2A terminal entrypoint.
 set -euo pipefail
 
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+config_file="$repo_root/.isaac_ros_common-config"
+run_dev_script="$repo_root/ros_ws/src/isaac_ros/isaac_ros_common/scripts/run_dev.sh"
 
-ensure_running
-
-if [[ $# -eq 0 ]]; then
-  print_command docker compose "${compose_args[@]}" exec "$service_name" bash
-  exec docker compose "${compose_args[@]}" exec "$service_name" bash
+if [[ ! -f "$run_dev_script" ]]; then
+  echo "Isaac ROS run_dev.sh was not found at $run_dev_script." >&2
+  echo "Run ./scripts/dev/sync_repos.sh first." >&2
+  exit 1
 fi
 
-print_command docker compose "${compose_args[@]}" exec "$service_name" "$@"
-exec docker compose "${compose_args[@]}" exec "$service_name" "$@"
+if [[ -f "$config_file" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$config_file"
+  set +a
+fi
+
+export TERM="${TERM:-xterm}"
+
+if [[ $# -eq 0 ]]; then
+  exec "$run_dev_script" -d "$repo_root"
+fi
+
+exec "$run_dev_script" -d "$repo_root" -- "$@"
