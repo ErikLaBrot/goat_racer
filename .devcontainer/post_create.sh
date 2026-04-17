@@ -18,7 +18,7 @@
 # Notes:
 #   Safe to rerun. This script skips workspace dependency installation when the
 #   workspace has not been synced yet.
-set -euo pipefail
+set -eo pipefail
 
 workspace_root="/workspace/goat_racer"
 workspace_src="$workspace_root/ros_ws/src"

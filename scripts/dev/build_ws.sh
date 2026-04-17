@@ -17,14 +17,14 @@
 #
 # Notes:
 #   Requires a synced workspace with at least one ROS package under `ros_ws/src`.
-set -euo pipefail
+set -eo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 ensure_running
 
 container_script=$(cat <<'EOF'
-set -euo pipefail
+set -eo pipefail
 
 ros_setup="/opt/ros/${ROS_DISTRO:-humble}/setup.bash"
 workspace_dir="/workspace/goat_racer/ros_ws"
@@ -40,6 +40,11 @@ if ! find "$workspace_dir/src" -name package.xml -print -quit | grep -q .; then
 fi
 
 cd "$workspace_dir"
+if [[ -d /usr/local/cuda ]]; then
+  echo "CUDA toolkit detected at ${CUDA_TOOLKIT_ROOT_DIR:-/usr/local/cuda}"
+else
+  echo "CUDA toolkit not found at /usr/local/cuda"
+fi
 colcon build --symlink-install "$@"
 EOF
 )

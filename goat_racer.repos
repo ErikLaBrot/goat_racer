@@ -6,4 +6,4 @@ repositories:
   ros_ws/src/goat_ros:
     type: git
     url: https://github.com/ErikLaBrot/goat_ros
-    version: feat/issue-9-isaac-vslam-bringup
+    version: feat/issue-11-default-sensor-wrapper

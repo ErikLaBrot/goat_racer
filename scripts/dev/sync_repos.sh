@@ -28,8 +28,20 @@ container_script=$(cat <<'EOF'
 set -euo pipefail
 
 repo_root="/workspace/goat_racer"
-git config --global --add safe.directory "$repo_root"
 mkdir -p "$repo_root/external" "$repo_root/ros_ws/src"
+
+register_safe_directories() {
+  git config --global --add safe.directory "$repo_root"
+
+  while IFS= read -r git_dir; do
+    git config --global --add safe.directory "$(dirname "$git_dir")"
+  done < <(
+    find "$repo_root/external" "$repo_root/ros_ws/src" \
+      -mindepth 1 -maxdepth 4 -type d -name .git 2>/dev/null | sort
+  )
+}
+
+register_safe_directories
 
 mapfile -t manifests < <(find "$repo_root" -maxdepth 1 -type f -name '*.repos' | sort)
 if [[ ${#manifests[@]} -eq 0 ]]; then
@@ -42,9 +54,7 @@ for manifest in "${manifests[@]}"; do
   vcs import "$repo_root" < "$manifest"
 done
 
-while IFS= read -r git_dir; do
-  git config --global --add safe.directory "$(dirname "$git_dir")"
-done < <(find "$repo_root/external" "$repo_root/ros_ws/src" -mindepth 1 -maxdepth 4 -type d -name .git | sort)
+register_safe_directories
 
 roots=()
 for candidate in "$repo_root/external" "$repo_root/ros_ws/src"; do

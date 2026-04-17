@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -eo pipefail
 
 ros_setup="/opt/ros/${ROS_DISTRO:-humble}/setup.bash"
 workspace_setup="/workspace/goat_racer/ros_ws/install/setup.bash"
