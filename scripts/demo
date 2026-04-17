@@ -14,25 +14,56 @@
 #
 # Usage:
 #   scripts/demo
+#   GOAT_TARGET=workstation scripts/demo
 #   scripts/demo joy_dev:=/dev/input/js1 deadzone:=0.02
 #   scripts/demo record:=true record_profile:=slam
 #   GOAT_ROSBAG_DIR=ros_ws/bags/demo scripts/demo record:=true
 #
 # Notes:
 #   Requires a completed `scripts/ros bootstrap` run so the workspace install
-#   setup file exists.
+#   setup file exists. `GOAT_TARGET` selects the compose overlay and defaults
+#   to `jetson`.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-compose_file="$repo_root/docker/compose.yaml"
 service_name="ros-humble"
 workspace_root="/workspace/goat_racer"
 workspace_install="/workspace/goat_racer/ros_ws/install/setup.bash"
 default_rosbag_dir="ros_ws/bags"
+default_target="jetson"
+target="${GOAT_TARGET:-$default_target}"
+compose_base_file="$repo_root/docker/compose.yaml"
+compose_target_file="$repo_root/docker/compose.$target.yaml"
+compose_args=(
+  -f "$compose_base_file"
+  -f "$compose_target_file"
+)
+
+validate_target() {
+  case "$target" in
+    workstation|jetson)
+      ;;
+    *)
+      echo "Invalid GOAT_TARGET '$target'. Expected 'workstation' or 'jetson'." >&2
+      exit 1
+      ;;
+  esac
+
+  if [[ ! -f "$compose_target_file" ]]; then
+    echo "Compose target file '$compose_target_file' does not exist." >&2
+    exit 1
+  fi
+}
+
+print_command() {
+  printf 'Running:'
+  printf ' %q' "$@"
+  printf '\n'
+}
 
 is_running() {
   local services
-  services="$(docker compose -f "$compose_file" ps --status running --services)"
+  services="$(docker compose "${compose_args[@]}" ps --status running --services)"
   [[ "$services" == *"$service_name"* ]]
 }
 
@@ -41,9 +72,11 @@ ensure_running() {
     return
   fi
 
-  echo "Container '$service_name' is not running; starting it now."
-  docker compose -f "$compose_file" up -d
+  echo "Container '$service_name' for GOAT_TARGET='$target' is not running; starting it now."
+  docker compose "${compose_args[@]}" up -d
 }
+
+validate_target
 
 if [[ ! -f "$repo_root/ros_ws/install/setup.bash" ]]; then
   echo "Workspace install is missing. Run scripts/ros bootstrap first." >&2
@@ -77,12 +110,10 @@ fi
 
 ensure_running
 
-printf 'Running:'
-printf ' %q' docker compose -f "$compose_file" exec "$service_name" bash -lc \
+print_command docker compose "${compose_args[@]}" exec "$service_name" bash -lc \
   "source /opt/ros/humble/setup.bash && source '$workspace_install' && ros2 launch goat_ros_launch robot.launch.py \"\$@\"" \
   bash "${launch_args[@]}"
-printf '\n'
 
-exec docker compose -f "$compose_file" exec "$service_name" bash -lc \
+exec docker compose "${compose_args[@]}" exec "$service_name" bash -lc \
   "source /opt/ros/humble/setup.bash && source '$workspace_install' && ros2 launch goat_ros_launch robot.launch.py \"\$@\"" \
   bash "${launch_args[@]}"
