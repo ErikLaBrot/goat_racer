@@ -1,0 +1,34 @@
+services:
+  goat-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.goat_isaac
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-arm64v8/ros:humble-ros-base}
+        ISAAC_ROS_APT_CHANNEL: ${ISAAC_ROS_APT_CHANNEL:-release-3}
+        ISAAC_ROS_APT_SERIES: ${ISAAC_ROS_APT_SERIES:-release-3.0}
+    container_name: goat-dev
+    platform: ${TARGET_PLATFORM:-linux/arm64}
+    working_dir: /workspace/goat_racer
+    network_mode: host
+    ipc: host
+    stdin_open: true
+    tty: true
+    volumes:
+      - ..:/workspace/goat_racer
+      - /dev:/dev
+      - /etc/localtime:/etc/localtime:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    device_cgroup_rules:
+      - "c 4:* rmw"
+      - "c 13:* rmw"
+      - "c 166:* rmw"
+      - "c 188:* rmw"
+    environment:
+      DISPLAY: ${DISPLAY:-}
+      NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-all}
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+      ROS_WS: /workspace/goat_racer/ros_ws
+      RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+    command: sleep infinity

@@ -6,6 +6,17 @@ This guide covers the current GOAT bringup path for Isaac ROS Visual SLAM on
 Jetson Orin Nano with a RealSense D435 first in stereo-only mode, then with the
 ESC IMU fused into Visual SLAM.
 
+## Status
+
+This document predates the Stage 1 move to the project-owned `goat-dev`
+container. Use `./scripts/dev/sync_repos.sh`, `./scripts/dev/enter.sh`,
+`./scripts/dev/rosdep_install.sh`, and `./scripts/dev/build_ws.sh` as the
+current repo entrypoints.
+
+Some runtime-specific Visual SLAM notes below still describe the manual
+upstream Isaac ROS workflow and should be treated as bringup notes rather than
+the primary repository workflow.
+
 ## Requirements
 
 - Jetson Orin Nano on JetPack 6.2
@@ -16,10 +27,12 @@ ESC IMU fused into Visual SLAM.
 
 ## Known-Good NVIDIA Dev Lane
 
-Bootstrap the workspace first:
+Prepare the workspace first:
 
 ```bash
-./scripts/ros bootstrap
+./scripts/dev/sync_repos.sh
+./scripts/dev/rosdep_install.sh
+./scripts/dev/build_ws.sh
 ```
 
 Configure `isaac_ros_common` for the RealSense-capable image:
@@ -29,7 +42,8 @@ cd ros_ws/src/isaac_ros/isaac_ros_common/scripts
 echo CONFIG_IMAGE_KEY=ros2_humble.realsense > .isaac_ros_common-config
 ```
 
-Launch the NVIDIA dev container from the repo root:
+If a tutorial still requires the upstream NVIDIA runtime container, launch it
+manually from the repo root:
 
 ```bash
 cd /home/goat/goat/goat_racer/ros_ws/src/isaac_ros/isaac_ros_common
