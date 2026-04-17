@@ -17,14 +17,14 @@
 #
 # Notes:
 #   Requires at least one ROS package under `ros_ws/src`.
-set -euo pipefail
+set -eo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 ensure_running
 
 container_script=$(cat <<'EOF'
-set -euo pipefail
+set -eo pipefail
 
 ros_setup="/opt/ros/${ROS_DISTRO:-humble}/setup.bash"
 workspace_src="/workspace/goat_racer/ros_ws/src"
