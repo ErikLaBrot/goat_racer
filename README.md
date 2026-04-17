@@ -44,8 +44,23 @@ cd goat_racer
 ./scripts/ros bootstrap
 ```
 
-`scripts/ros bootstrap` imports the nested repositories defined in
-`goat_racer.repos`, installs ROS dependencies, and builds the workspace.
+`scripts/ros bootstrap` imports every root-level `.repos` manifest, installs
+ROS dependencies across the workspace roots, and builds the workspace.
+
+The GOAT sources live in `goat_racer.repos`. NVIDIA Isaac ROS sources live in
+`isaac_ros.repos` and are checked out under `ros_ws/src/isaac_ros`.
+The manifest currently includes `isaac_ros_common`, `isaac_ros_visual_slam`,
+and `isaac_ros_nvblox`, all on the `release-3.2` branch so the workspace stays
+on the JetPack 6.2 and ROS 2 Humble support line.
+
+The current `goat_racer.repos` branch pin also pulls the in-flight
+`goat_ros` Visual SLAM bringup branch so fresh bootstraps pick up the new D435
+and ESC IMU launch/config changes while this work is under review.
+
+`isaac_ros_visual_slam` and `isaac_ros_nvblox` also depend on additional Isaac
+ROS source packages such as the GXF and NITROS stacks, so this manifest is the
+initial repository set rather than the complete transitive Isaac ROS source
+closure.
 
 On an Ubuntu workstation, select the secondary dev/debug target explicitly:
 
@@ -56,6 +71,20 @@ GOAT_TARGET=workstation ./scripts/ros bootstrap
 Before running the demo, update
 `ros_ws/src/goat_ros/goat_ros_drivers/goat_vesc_ros/config/goat_vesc.yaml` so
 `device_path` points at the correct VESC interface.
+
+## Isaac ROS Visual SLAM
+
+GOAT now includes D435-oriented Isaac ROS Visual SLAM entrypoints in
+`goat_ros_launch`, including a stereo-only bench launch and a VIO-oriented
+robot wrapper that uses the ESC IMU.
+
+The shared `docker/compose.yaml` container is still the generic GOAT build
+environment. Use the NVIDIA `isaac_ros_common/scripts/run_dev.sh` workflow for
+the RealSense and Isaac ROS runtime packages, then build or launch the GOAT
+Visual SLAM path from there.
+
+The full setup, launch, and validation flow lives in
+[docs/isaac_ros_visual_slam.md](/home/goat/goat/goat_racer/docs/isaac_ros_visual_slam.md).
 
 ## Demo
 
@@ -134,6 +163,7 @@ from the host.
 
 ## Notes
 
-- Detailed ROS package docs live in [ros_ws/src/goat_ros/README.md](/home/erik/goat/goat_racer/ros_ws/src/goat_ros/README.md).
-- Detailed `goat_vesc` docs live in [external/goat_vesc/README.md](/home/erik/goat/goat_racer/external/goat_vesc/README.md).
-- The nested checkout manifest lives in [goat_racer.repos](/home/erik/goat/goat_racer/goat_racer.repos).
+- Detailed ROS package docs live in [ros_ws/src/goat_ros/README.md](/home/goat/goat/goat_racer/ros_ws/src/goat_ros/README.md).
+- Detailed `goat_vesc` docs live in [external/goat_vesc/README.md](/home/goat/goat/goat_racer/external/goat_vesc/README.md).
+- The Visual SLAM bringup guide lives in [docs/isaac_ros_visual_slam.md](/home/goat/goat/goat_racer/docs/isaac_ros_visual_slam.md).
+- The nested checkout manifests live in [goat_racer.repos](/home/goat/goat/goat_racer/goat_racer.repos) and [isaac_ros.repos](/home/goat/goat/goat_racer/isaac_ros.repos).
