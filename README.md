@@ -1,9 +1,9 @@
 # goat_racer
 
 `goat_racer` is the top-level orchestration repository for the GOAT robot
-workspace. It keeps GOAT-owned ROS packages separate from the vendored Isaac
-ROS source tree and provides a small set of helper scripts that call Isaac
-ROS tooling directly.
+workspace. It keeps GOAT-owned ROS packages separate from the vendored
+`isaac_ros_common` checkout and uses prebuilt Isaac ROS packages inside the
+development container to simplify setup.
 
 ## Requirements
 
@@ -12,7 +12,7 @@ ROS tooling directly.
 - `vcs`
 - Permission to run Docker commands on the host
 
-## Developer Workflow
+## Deployment Workflow
 
 1. Clone the repository.
 2. Sync nested repositories:
@@ -21,52 +21,51 @@ ROS tooling directly.
    ./scripts/dev/sync_repos.sh
    ```
 
-3. Open the repo in the VS Code devcontainer or attach from a terminal:
+3. Enter the Isaac ROS development container:
 
    ```bash
    ./scripts/dev/enter.sh
    ```
 
-4. Install workspace dependencies:
+4. Install package dependencies:
 
    ```bash
    ./scripts/dev/rosdep_install.sh
    ```
 
-5. Build the workspace:
+5. Build the GOAT workspace packages:
 
    ```bash
    ./scripts/dev/build_ws.sh
    ```
 
-6. Launch Visual SLAM:
-
-   Upstream Isaac ROS RealSense example:
-
-   ```bash
-   ros2 launch isaac_ros_visual_slam isaac_ros_visual_slam_realsense.launch.py
-   ```
-
-   GOAT sensor wrapper path:
+6. Launch the default GOAT D435 Visual SLAM demo:
 
    ```bash
    ./scripts/ops/run_vslam.sh
    ```
 
 `./scripts/dev/enter.sh` is the primary way to enter the dev environment. It
-sources the repo-owned [.isaac_ros_common-config](/home/goat/goat/goat_racer/.isaac_ros_common-config)
-and then execs upstream `isaac_ros_common/scripts/run_dev.sh -d <repo-root>`.
-Compose and devcontainer assets may remain in the repo for later work, but they
-are not the Stage 2A primary workflow.
+execs upstream `src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>`.
+`./scripts/dev/sync_repos.sh` ensures the standard Isaac ROS config file exists
+at `src/isaac_ros_common/scripts/.isaac_ros_common-config` with the upstream
+`ros2_humble.realsense` image key.
+
+`./scripts/dev/build_ws.sh` builds GOAT-owned packages only from
+`ros_ws/src/goat_ros` and `external/goat_vesc`. `./scripts/dev/rosdep_install.sh`
+installs missing host dependencies and pulls Isaac ROS runtime packages such as
+`isaac_ros_visual_slam` as prebuilt Debian packages instead of relying on a
+source checkout.
 
 ## Layout
 
 - `ros_ws/` is the main ROS workspace root.
 - `ros_ws/src/goat_ros` is reserved for GOAT ROS packages.
-- `ros_ws/src/isaac_ros` is reserved for Isaac ROS source checkouts.
+- `src/isaac_ros_common` is the vendored upstream Isaac ROS tooling checkout
+  used by `run_dev.sh`.
 - `external/` is reserved for non-ROS project dependencies.
-- `docker/` and `.devcontainer/` contain secondary Stage 1 assets that are not
-  the primary Stage 2A workflow.
+- `.devcontainer/` remains a secondary workflow and is not the source of truth
+  for the supported Jetson deployment path.
 
 ## Additional Docs
 

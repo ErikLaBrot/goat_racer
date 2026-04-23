@@ -1,29 +1,50 @@
 #!/usr/bin/env bash
-# Describe the intended Jetson bootstrap flow for Stage 1.
+# Print the supported fresh-Jetson GOAT deployment flow.
 #
 # Purpose:
-#   Reserve the Jetson bootstrap entrypoint while the repo layout and container
-#   workflow are being established.
+#   Summarize the expected host baseline and the non-mutating command sequence
+#   for the standard Isaac ROS Common workflow on a newly provisioned Jetson.
 #
 # Inputs:
 #   None.
 #
 # Outputs:
-#   Prints the current manual bootstrap checklist.
+#   Prints the current supported deployment checklist and relevant docs.
 #
 # Usage:
 #   ./scripts/robot/bootstrap_jetson.sh
 #
 # Notes:
-#   This script does not make host changes yet.
+#   This script does not make host changes.
 set -euo pipefail
 
-cat <<'EOF'
-Stage 1 does not automate Jetson bootstrap yet.
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-Recommended manual baseline:
-1. Install Docker Engine and NVIDIA Container Toolkit support.
-2. Ensure Jetson NVIDIA container runtime support is available on the host.
-3. Run ./scripts/robot/audit_jetson.sh to capture the current host state.
-4. Start the Isaac ROS dev container with ./scripts/dev/enter.sh.
+cat <<EOF
+Supported GOAT Jetson deployment flow
+
+Expected host baseline:
+1. Jetson host with Docker and NVIDIA container runtime support.
+2. git-lfs and vcs installed on the host.
+3. D435 connected before launching the container.
+
+Recommended verification:
+- ./scripts/robot/audit_jetson.sh
+
+Fresh checkout workflow:
+1. git clone <goat_racer_repo>
+2. cd goat_racer
+3. ./scripts/dev/sync_repos.sh
+4. ./scripts/dev/enter.sh
+5. ./scripts/dev/rosdep_install.sh
+6. ./scripts/dev/build_ws.sh
+7. ./scripts/ops/run_vslam.sh
+
+Optional maintenance commands:
+- ./scripts/dev/clean_ws.sh
+- ./scripts/robot/audit_jetson.sh
+
+Primary docs:
+- $repo_root/README.md
+- $repo_root/docs/isaac_ros_visual_slam.md
 EOF

@@ -2,16 +2,16 @@
 # Launch the GOAT Visual SLAM sensor wrapper inside the Isaac ROS container.
 #
 # Purpose:
-#   Provide a thin operator-facing helper for the Stage 2A GOAT Visual SLAM
-#   path after the workspace has been built.
+#   Provide the primary operator-facing GOAT Visual SLAM demo path after the
+#   workspace has been built.
 #
 # Inputs:
 #   Optional extra `ros2 launch` arguments forwarded to
 #   `goat_ros_launch/sensors.launch.py`.
 #
 # Outputs:
-#   Starts the GOAT D435 Visual SLAM launch path in the Isaac ROS dev
-#   container.
+#   Starts the default GOAT D435 stereo-only Visual SLAM launch path in the
+#   Isaac ROS dev container.
 #
 # Usage:
 #   ./scripts/ops/run_vslam.sh
