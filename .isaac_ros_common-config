@@ -1,2 +1,15 @@
-CONFIG_IMAGE_KEY=ros2_humble.realsense
+# Resolve the repo-local Docker overlay directory relative to this config file
+# so the checkout can live anywhere on disk.
+_goat_repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+CONFIG_IMAGE_KEY=ros2_humble.realsense.goat
 CONFIG_CONTAINER_NAME_SUFFIX=goat_racer
+CONFIG_DOCKER_SEARCH_DIRS=("$_goat_repo_root/docker")
+
+# Optional: set GOAT_BASE_DOCKER_REGISTRY_NAMES to a space-separated list of
+# registry/repository prefixes to check for prebuilt Isaac image layers.
+if [[ -n "${GOAT_BASE_DOCKER_REGISTRY_NAMES:-}" ]]; then
+  read -r -a CONFIG_BASE_DOCKER_REGISTRY_NAMES <<< "${GOAT_BASE_DOCKER_REGISTRY_NAMES}"
+fi
+
+unset _goat_repo_root
