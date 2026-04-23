@@ -55,7 +55,6 @@ CLI overrides still work when needed:
 ```
 
 ## Optional Debug Check
-
 If you want to confirm the preinstalled Isaac packages directly inside the
 container, run:
 
