@@ -3,9 +3,9 @@
 ## Purpose
 
 This is the supported GOAT bringup guide for Isaac ROS Visual SLAM on a fresh
-Jetson. The goal is to keep the normal workflow on `run_dev.sh`, move the heavy
-Isaac ROS dependencies into the GOAT image layer, and finish with the GOAT
-D435 stereo-only VSLAM demo.
+Jetson. The goal is to keep the normal workflow on `run_dev.sh`, install Isaac
+ROS runtime packages as prebuilt debs, and finish with the GOAT D435
+stereo-only VSLAM demo.
 
 ## Requirements
 
@@ -22,15 +22,16 @@ From the repo root:
 ```bash
 ./scripts/dev/sync_repos.sh
 ./scripts/dev/enter.sh
+./scripts/dev/rosdep_install.sh
 ./scripts/dev/build_ws.sh
 ./scripts/ops/run_vslam.sh
 ```
 
-`./scripts/dev/enter.sh` remains the primary container workflow. It sources the
-repo-owned [.isaac_ros_common-config](/home/goat/goat/goat_racer/.isaac_ros_common-config)
-and then calls upstream `isaac_ros_common/scripts/run_dev.sh -d /path/to/repo`.
-The configured image key is `ros2_humble.realsense.goat`, which resolves the
-GOAT Docker layer in `docker/Dockerfile.goat`.
+`./scripts/dev/enter.sh` remains the primary container workflow. It calls
+upstream `src/isaac_ros_common/scripts/run_dev.sh -d /path/to/repo`.
+`./scripts/dev/sync_repos.sh` ensures the standard Isaac ROS config file exists
+at `src/isaac_ros_common/scripts/.isaac_ros_common-config` with
+`CONFIG_IMAGE_KEY=ros2_humble.realsense`.
 
 ## Default Demo Behavior
 
@@ -42,6 +43,8 @@ GOAT Docker layer in `docker/Dockerfile.goat`.
   - color disabled
   - depth disabled
   - IMU fusion disabled unless you pass `enable_imu_fusion:=true`
+- `./scripts/dev/rosdep_install.sh` installs prebuilt Isaac ROS runtime
+  packages for the GOAT source trees.
 - `./scripts/dev/build_ws.sh` builds GOAT-owned packages only. It does not
   source-build `isaac_ros_visual_slam` in the regular workspace.
 
@@ -51,11 +54,7 @@ CLI overrides still work when needed:
 ./scripts/ops/run_vslam.sh sensor_launch_arguments:="enable_imu_fusion:=true"
 ```
 
-`./scripts/dev/rosdep_install.sh` is kept as a fallback helper for future GOAT
-dependency changes, but it is not required for the default flow above.
-
 ## Optional Debug Check
-
 If you want to confirm the preinstalled Isaac packages directly inside the
 container, run:
 
@@ -82,7 +81,6 @@ Quick spot checks:
 ros2 topic list | grep visual_slam
 ros2 topic echo /visual_slam/tracking/odometry --once
 ros2 pkg prefix isaac_ros_visual_slam
-ros2 pkg prefix isaac_ros_examples
 ```
 
 ## Limits

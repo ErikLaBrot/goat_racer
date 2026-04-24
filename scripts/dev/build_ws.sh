@@ -16,8 +16,8 @@
 #   ./scripts/dev/build_ws.sh --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 #
 # Notes:
-#   Builds the GOAT overlay packages only and does not source-build Isaac ROS
-#   Visual SLAM in the regular workspace flow.
+#   Builds GOAT-owned packages only. Isaac ROS runtime packages are expected to
+#   be installed as prebuilt debs via rosdep/apt rather than built from source.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"

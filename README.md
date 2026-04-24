@@ -1,8 +1,9 @@
 # goat_racer
 
 `goat_racer` is the top-level orchestration repository for the GOAT robot
-workspace. It keeps GOAT-owned ROS packages in a thin local overlay on top of
-an Isaac ROS RealSense image extended with a small GOAT-specific Docker layer.
+workspace. It keeps GOAT-owned ROS packages separate from the vendored
+`isaac_ros_common` checkout and uses prebuilt Isaac ROS packages inside the
+development container to simplify setup.
 
 ## Requirements
 
@@ -20,66 +21,49 @@ an Isaac ROS RealSense image extended with a small GOAT-specific Docker layer.
    ./scripts/dev/sync_repos.sh
    ```
 
-3. Enter the GOAT Isaac development container:
+3. Enter the Isaac ROS development container:
 
    ```bash
    ./scripts/dev/enter.sh
    ```
 
-4. Build the GOAT overlay packages:
+4. Install package dependencies:
+
+   ```bash
+   ./scripts/dev/rosdep_install.sh
+   ```
+
+5. Build the GOAT workspace packages:
 
    ```bash
    ./scripts/dev/build_ws.sh
    ```
 
-5. Launch the default GOAT D435 Visual SLAM demo:
+6. Launch the default GOAT D435 Visual SLAM demo:
 
    ```bash
    ./scripts/ops/run_vslam.sh
    ```
 
 `./scripts/dev/enter.sh` is the primary way to enter the dev environment. It
-sources the repo-owned [.isaac_ros_common-config](/home/goat/goat/goat_racer/.isaac_ros_common-config)
-and then execs upstream `isaac_ros_common/scripts/run_dev.sh -d <repo-root>`.
-The default image key is `ros2_humble.realsense.goat`, which adds the heavy
-Isaac ROS Visual SLAM packages to the GOAT image layer instead of source
-building them in the normal workspace.
+execs upstream `src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>`.
+`./scripts/dev/sync_repos.sh` ensures the standard Isaac ROS config file exists
+at `src/isaac_ros_common/scripts/.isaac_ros_common-config` with the upstream
+`ros2_humble.realsense` image key.
 
 `./scripts/dev/build_ws.sh` builds GOAT-owned packages only from
-`ros_ws/src/goat_ros` and `external/goat_vesc`. The default VSLAM demo is the
-GOAT D435 stereo-only path: infrared stereo enabled, color and depth disabled,
-and IMU fusion off unless you opt in explicitly.
-
-`./scripts/dev/rosdep_install.sh` remains available as a fallback helper when
-GOAT package dependencies change, but it is not part of the normal fresh-Jetson
-happy path.
-
-## Image Helpers
-
-Build or publish the GOAT image explicitly when needed:
-
-```bash
-./scripts/dev/build_goat_image.sh
-./scripts/dev/tag_goat_image.sh
-GOAT_IMAGE_REGISTRY=ghcr.io/example ./scripts/dev/push_goat_image.sh
-```
-
-These scripts use env-driven naming:
-
-- `GOAT_IMAGE_ARCH` defaults to `aarch64`
-- `GOAT_IMAGE_KEY` defaults to `ros2_humble.realsense.goat`
-- `GOAT_IMAGE_NAME` defaults to `isaac_ros_dev-${GOAT_IMAGE_ARCH}-goat_racer`
-- `GOAT_IMAGE_REGISTRY`, `GOAT_IMAGE_REPOSITORY`, and `GOAT_IMAGE_TAG` are optional
+`ros_ws/src/goat_ros` and `external/goat_vesc`. `./scripts/dev/rosdep_install.sh`
+installs missing host dependencies and pulls Isaac ROS runtime packages such as
+`isaac_ros_visual_slam` as prebuilt Debian packages instead of relying on a
+source checkout.
 
 ## Layout
 
 - `ros_ws/` is the main ROS workspace root.
 - `ros_ws/src/goat_ros` is reserved for GOAT ROS packages.
-- `ros_ws/src/isaac_ros` keeps the upstream `isaac_ros_common` source checkout
+- `src/isaac_ros_common` is the vendored upstream Isaac ROS tooling checkout
   used by `run_dev.sh`.
 - `external/` is reserved for non-ROS project dependencies.
-- `docker/` contains the GOAT image overlay layer used by Isaac ROS image
-  resolution.
 - `.devcontainer/` remains a secondary workflow and is not the source of truth
   for the supported Jetson deployment path.
 

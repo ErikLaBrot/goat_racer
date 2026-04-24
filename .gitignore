@@ -4,6 +4,9 @@
 /ros_ws/bags/*
 !/ros_ws/bags/
 !/ros_ws/bags/README.md
+/ros_ws/src/goat_ros/
+/external/goat_vesc/
+/src/isaac_ros_common/
 /log/
 /.vscode/
 __pycache__/

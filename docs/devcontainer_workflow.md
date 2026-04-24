@@ -6,17 +6,18 @@ The supported Stage 2A path is:
 
 1. `./scripts/dev/sync_repos.sh`
 2. `./scripts/dev/enter.sh`
-3. `./scripts/dev/build_ws.sh`
-4. `./scripts/ops/run_vslam.sh`
+3. `./scripts/dev/rosdep_install.sh`
+4. `./scripts/dev/build_ws.sh`
+5. `./scripts/ops/run_vslam.sh`
 
 Those repo helpers call Isaac ROS tooling directly. They do not rely on Docker
 Compose as the primary container workflow.
 
-`./scripts/dev/enter.sh` launches the `ros2_humble.realsense.goat` image key,
-which resolves the GOAT overlay layer from `docker/Dockerfile.goat`.
-
-`./scripts/dev/rosdep_install.sh` still exists as a fallback helper when GOAT
-package dependencies change, but it is no longer part of the normal happy path.
+`./scripts/dev/enter.sh` delegates to the vendored upstream
+`src/isaac_ros_common/scripts/run_dev.sh`. `./scripts/dev/sync_repos.sh`
+ensures the standard Isaac ROS config file exists at
+`src/isaac_ros_common/scripts/.isaac_ros_common-config` with
+`CONFIG_IMAGE_KEY=ros2_humble.realsense`.
 
 ## Current Status
 
@@ -33,7 +34,7 @@ a secondary workflow. The supported command-line flow still uses
 
 ## Workspace Layout
 
+- `src/isaac_ros_common` for the upstream Isaac ROS tooling checkout
 - `ros_ws/src/goat_ros` for project ROS packages
-- `ros_ws/src/isaac_ros` for the upstream `isaac_ros_common` checkout
 - `external/` for non-ROS dependencies
 - `ros_ws/bags` for rosbag output when you choose to record manually

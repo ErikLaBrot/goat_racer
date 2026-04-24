@@ -3,7 +3,7 @@
 #
 # Purpose:
 #   Summarize the expected host baseline and the non-mutating command sequence
-#   for the GOAT Isaac overlay workflow on a newly provisioned Jetson.
+#   for the standard Isaac ROS Common workflow on a newly provisioned Jetson.
 #
 # Inputs:
 #   None.
@@ -36,14 +36,13 @@ Fresh checkout workflow:
 2. cd goat_racer
 3. ./scripts/dev/sync_repos.sh
 4. ./scripts/dev/enter.sh
-5. ./scripts/dev/build_ws.sh
-6. ./scripts/ops/run_vslam.sh
+5. ./scripts/dev/rosdep_install.sh
+6. ./scripts/dev/build_ws.sh
+7. ./scripts/ops/run_vslam.sh
 
 Optional maintenance commands:
-- ./scripts/dev/build_goat_image.sh
-- ./scripts/dev/tag_goat_image.sh
-- ./scripts/dev/push_goat_image.sh
-- ./scripts/dev/rosdep_install.sh  # fallback when GOAT dependencies change
+- ./scripts/dev/clean_ws.sh
+- ./scripts/robot/audit_jetson.sh
 
 Primary docs:
 - $repo_root/README.md

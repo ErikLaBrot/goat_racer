@@ -11,7 +11,8 @@
 #   - host-side `vcs` for the initial bootstrap case.
 #
 # Outputs:
-#   Creates or updates nested repositories under `external/` and `ros_ws/src/`.
+#   Creates or updates nested repositories under the paths owned by the root
+#   manifests and writes the standard Isaac ROS config file.
 #
 # Usage:
 #   ./scripts/dev/sync_repos.sh
@@ -21,7 +22,21 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-run_dev_script="$repo_root/ros_ws/src/isaac_ros/isaac_ros_common/scripts/run_dev.sh"
+run_dev_script="$repo_root/src/isaac_ros_common/scripts/run_dev.sh"
+isaac_config_file="$repo_root/src/isaac_ros_common/scripts/.isaac_ros_common-config"
+
+ensure_standard_isaac_config() {
+  local config_dir
+
+  config_dir="$(dirname "$isaac_config_file")"
+  if [[ ! -d "$config_dir" ]]; then
+    return 0
+  fi
+
+  cat > "$isaac_config_file" <<'EOF'
+CONFIG_IMAGE_KEY=ros2_humble.realsense
+EOF
+}
 
 collect_repo_dirs() {
   local repo_path
@@ -139,7 +154,10 @@ fi
 collect_repo_dirs
 
 if [[ -f "$run_dev_script" ]]; then
+  ensure_standard_isaac_config
   run_container_sync
 else
   run_host_sync
 fi
+
+ensure_standard_isaac_config
