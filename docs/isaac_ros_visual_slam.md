@@ -3,9 +3,9 @@
 ## Purpose
 
 This is the supported GOAT bringup guide for Isaac ROS Visual SLAM on a fresh
-Jetson. The goal is to keep the normal workflow on `run_dev.sh`, install Isaac
-ROS runtime packages as prebuilt debs, and finish with the GOAT D435
-stereo-only VSLAM demo.
+Jetson. The goal is to keep the normal workflow on repo-owned container
+orchestration, install Isaac ROS runtime packages as prebuilt debs, and finish
+with the GOAT D435 stereo-only VSLAM demo.
 
 ## Requirements
 
@@ -29,8 +29,9 @@ From the repo root:
 manifest-managed repositories on the host, copies the repo-root Isaac config
 from `.isaac_ros_common-config` into
 `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, launches the
-Isaac container, installs dependency packages, and prepares the workspace.
-`./scripts/dev/build.sh` then rebuilds the GOAT package set inside that
+Isaac container through repo-owned container orchestration, installs dependency
+packages, and prepares the workspace. `./scripts/dev/build.sh` then rebuilds
+the GOAT package set inside that
 container-managed environment. If you run it from inside the container, it
 builds directly without re-triggering host Docker logic.
 
@@ -38,7 +39,8 @@ builds directly without re-triggering host Docker logic.
 
 - `./scripts/ops/run_vslam_demo.sh` is the normal deployment and demo entrypoint.
 - It is container-aware, so running it from inside the Isaac container skips
-  host-side Docker/user/group checks.
+  host-side Docker/user/group checks, and running it from the host uses the
+  same repo-owned container orchestration as `build.sh`.
 - It launches `goat_ros_launch/sensors.launch.py`, which defaults to the GOAT
   D435 Visual SLAM wrapper from `goat_ros_launch/config/sensors.yaml`.
 - The default GOAT D435 profile is stereo-only:

@@ -22,36 +22,16 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "$repo_root/scripts/_lib/isaac_container.sh"
+
 root_isaac_config_file="$repo_root/.isaac_ros_common-config"
 isaac_repo_dir="$repo_root/ros_ws/src/isaac_ros_common"
-isaac_scripts_dir="$repo_root/ros_ws/src/isaac_ros_common/scripts"
-isaac_config_file="$isaac_scripts_dir/.isaac_ros_common-config"
 goat_ros_dir="$repo_root/ros_ws/src/goat_ros"
 goat_vesc_dir="$repo_root/external/goat_vesc"
+container_script="$repo_root/scripts/dev/_bootstrap_in_container.sh"
+container_script_in_workspace="$GOAT_CONTAINER_WORKSPACE/scripts/dev/_bootstrap_in_container.sh"
 
-is_inside_isaac_container() {
-  [[ -f /.dockerenv || "${ISAAC_ROS_WS:-}" == "/workspaces/isaac_ros-dev" ]]
-}
-
-resolve_isaac_launcher() {
-  local launcher=""
-
-  if [[ -f "$isaac_scripts_dir/run_dev.sh" ]]; then
-    launcher="$isaac_scripts_dir/run_dev.sh"
-  elif [[ -f "$isaac_scripts_dir/enter.sh" ]]; then
-    launcher="$isaac_scripts_dir/enter.sh"
-  fi
-
-  if [[ -z "$launcher" ]]; then
-    echo "Isaac ROS launcher was not found under $isaac_scripts_dir after manifest sync." >&2
-    echo "Check isaac_ros.repos and rerun ./scripts/dev/bootstrap.sh." >&2
-    exit 1
-  fi
-
-  printf '%s\n' "$launcher"
-}
-
-if is_inside_isaac_container; then
+if goat_is_inside_isaac_container; then
   echo "./scripts/dev/bootstrap.sh must be run on the host, not from inside the Isaac ROS container." >&2
   exit 1
 fi
@@ -102,8 +82,10 @@ if [[ ! -d "$isaac_repo_dir" ]]; then
   exit 1
 fi
 
-mkdir -p "$(dirname "$isaac_config_file")"
-cp "$root_isaac_config_file" "$isaac_config_file"
+if [[ ! -f "$container_script" ]]; then
+  echo "Internal bootstrap helper not found at $container_script." >&2
+  exit 1
+fi
 
 if [[ ! -d "$goat_ros_dir" ]]; then
   echo "GOAT ROS source tree not found at $goat_ros_dir after manifest sync." >&2
@@ -115,31 +97,7 @@ if [[ ! -d "$goat_vesc_dir" ]]; then
   exit 1
 fi
 
+goat_sync_repo_isaac_config
+
 export TERM="${TERM:-xterm}"
-launcher="$(resolve_isaac_launcher)"
-
-exec "$launcher" -d "$repo_root" -- -lc '
-set -e
-
-repo_root="/workspaces/isaac_ros-dev"
-workspace_dir="$repo_root/ros_ws"
-goat_ros_dir="$workspace_dir/src/goat_ros"
-goat_vesc_dir="$repo_root/external/goat_vesc"
-
-source /opt/ros/humble/setup.bash
-
-if [[ ! -d "$goat_ros_dir" ]]; then
-  echo "GOAT ROS source tree not found at $goat_ros_dir after bootstrap sync." >&2
-  exit 1
-fi
-
-if [[ ! -d "$goat_vesc_dir" ]]; then
-  echo "GOAT VESC source tree not found at $goat_vesc_dir after bootstrap sync." >&2
-  exit 1
-fi
-
-rosdep update
-rosdep install --from-paths "$goat_vesc_dir" "$goat_ros_dir" --ignore-src --rosdistro humble -r -y
-
-mkdir -p "$workspace_dir/build" "$workspace_dir/install" "$workspace_dir/log"
-' bash
+goat_exec_in_isaac_container "$container_script_in_workspace"

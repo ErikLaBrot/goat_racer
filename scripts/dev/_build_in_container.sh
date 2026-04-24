@@ -3,12 +3,14 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "$repo_root/scripts/_lib/isaac_container.sh"
+
 workspace_dir="$repo_root/ros_ws"
 goat_ros_dir="$workspace_dir/src/goat_ros"
 goat_vesc_dir="$repo_root/external/goat_vesc"
 workspace_setup="$workspace_dir/install/setup.bash"
 
-source /opt/ros/humble/setup.bash
+goat_safe_source /opt/ros/humble/setup.bash
 
 if [[ ! -d "$goat_ros_dir" ]]; then
   echo "GOAT ROS source tree not found at $goat_ros_dir." >&2
@@ -38,7 +40,7 @@ if [[ ! -f "$workspace_setup" ]]; then
   exit 1
 fi
 
-source "$workspace_setup"
+goat_safe_source "$workspace_setup"
 
 colcon build \
   --base-paths "$goat_vesc_dir" "$goat_ros_dir" \

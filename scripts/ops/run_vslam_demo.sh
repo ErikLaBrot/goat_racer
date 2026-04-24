@@ -22,41 +22,26 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "$repo_root/scripts/_lib/isaac_container.sh"
+
 container_script="$repo_root/scripts/ops/_run_vslam_demo_in_container.sh"
-
-is_inside_isaac_container() {
-  [[ -f /.dockerenv || "${ISAAC_ROS_WS:-}" == "/workspaces/isaac_ros-dev" ]]
-}
-
-resolve_isaac_launcher() {
-  local scripts_dir="$repo_root/ros_ws/src/isaac_ros_common/scripts"
-  local launcher=""
-
-  if [[ -f "$scripts_dir/run_dev.sh" ]]; then
-    launcher="$scripts_dir/run_dev.sh"
-  elif [[ -f "$scripts_dir/enter.sh" ]]; then
-    launcher="$scripts_dir/enter.sh"
-  fi
-
-  if [[ -z "$launcher" ]]; then
-    echo "Isaac ROS launcher was not found under $scripts_dir." >&2
-    echo "Run ./scripts/dev/bootstrap.sh first." >&2
-    exit 1
-  fi
-
-  printf '%s\n' "$launcher"
-}
+container_script_in_workspace="$GOAT_CONTAINER_WORKSPACE/scripts/ops/_run_vslam_demo_in_container.sh"
+workspace_setup="$repo_root/ros_ws/install/setup.bash"
 
 if [[ ! -f "$container_script" ]]; then
   echo "Internal VSLAM demo helper not found at $container_script." >&2
   exit 1
 fi
 
-if is_inside_isaac_container; then
+if goat_is_inside_isaac_container; then
   exec "$container_script" "$@"
 fi
 
-export TERM="${TERM:-xterm}"
-launcher="$(resolve_isaac_launcher)"
+if [[ ! -f "$workspace_setup" ]]; then
+  echo "Workspace setup file not found at $workspace_setup." >&2
+  echo "Run ./scripts/dev/build.sh first." >&2
+  exit 1
+fi
 
-exec "$launcher" -d "$repo_root" -- /workspaces/isaac_ros-dev/scripts/ops/_run_vslam_demo_in_container.sh "$@"
+export TERM="${TERM:-xterm}"
+goat_exec_in_isaac_container "$container_script_in_workspace" "$@"
