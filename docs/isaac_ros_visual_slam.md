@@ -30,10 +30,12 @@ manifest-managed repositories on the host, copies the repo-root Isaac config
 from `.isaac_ros_common-config` into
 `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, launches the
 Isaac container through repo-owned container orchestration, installs dependency
-packages, and prepares the workspace. `./scripts/dev/build.sh` then rebuilds
-the GOAT package set inside that
-container-managed environment. If you run it from inside the container, it
-builds directly without re-triggering host Docker logic.
+packages, and prepares the workspace. That named container is then reused by
+`./scripts/dev/build.sh` and `./scripts/ops/run_vslam_demo.sh` so the installed
+runtime packages persist across commands. `./scripts/dev/build.sh` then
+rebuilds the GOAT package set inside that container-managed environment. If you
+run it from inside the container, it builds directly without re-triggering host
+Docker logic.
 
 ## Default Demo Behavior
 

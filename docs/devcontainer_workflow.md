@@ -19,7 +19,7 @@ host, then copies the repo-root Isaac config file
 
 `./scripts/dev/build.sh` and `./scripts/ops/run_vslam_demo.sh` are
 container-aware. From the host they use repo-owned container orchestration to
-start or reuse the Isaac container; from inside the container they run
+start or reuse a named Isaac container; from inside the container they run
 repo-owned internal helper scripts directly instead of re-running host Docker
 setup logic.
 

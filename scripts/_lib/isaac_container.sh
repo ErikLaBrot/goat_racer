@@ -119,6 +119,26 @@ goat_container_is_running() {
   [[ -n "$(docker ps --quiet --filter "name=^/${GOAT_CONTAINER_NAME}$")" ]]
 }
 
+goat_exec_running_container() {
+  docker exec -i -t -u admin \
+    --workdir "$GOAT_CONTAINER_WORKSPACE" \
+    "$GOAT_CONTAINER_NAME" \
+    /bin/bash "$@"
+}
+
+goat_wait_for_running_container() {
+  local attempt=0
+
+  until goat_exec_running_container -lc "true" >/dev/null 2>&1; do
+    attempt=$((attempt + 1))
+    if (( attempt >= 30 )); then
+      echo "Timed out waiting for Isaac container $GOAT_CONTAINER_NAME to become ready." >&2
+      exit 1
+    fi
+    sleep 1
+  done
+}
+
 goat_build_image_if_needed() {
   local build_image_layers_script="$GOAT_ISAAC_SCRIPTS_DIR/build_image_layers.sh"
 
@@ -210,27 +230,26 @@ goat_exec_in_isaac_container() {
   goat_load_isaac_config
   goat_remove_exited_container
 
-  if goat_container_is_running; then
-    exec docker exec -i -t -u admin \
+  if ! goat_container_is_running; then
+    goat_build_image_if_needed
+    goat_build_default_docker_args
+
+    docker run -d \
+      --privileged \
+      --network host \
+      --ipc=host \
+      "${GOAT_DOCKER_ARGS[@]}" \
+      -v "$GOAT_REPO_ROOT:$GOAT_CONTAINER_WORKSPACE" \
+      -v /etc/localtime:/etc/localtime:ro \
+      --name "$GOAT_CONTAINER_NAME" \
+      --runtime nvidia \
+      --entrypoint /usr/local/bin/scripts/workspace-entrypoint.sh \
       --workdir "$GOAT_CONTAINER_WORKSPACE" \
-      "$GOAT_CONTAINER_NAME" \
-      /bin/bash "$container_script" "$@"
+      "$GOAT_BASE_NAME" \
+      /bin/bash -lc 'trap "exit 0" TERM INT; while true; do sleep 3600; done' >/dev/null
+
+    goat_wait_for_running_container
   fi
 
-  goat_build_image_if_needed
-  goat_build_default_docker_args
-
-  exec docker run -it --rm \
-    --privileged \
-    --network host \
-    --ipc=host \
-    "${GOAT_DOCKER_ARGS[@]}" \
-    -v "$GOAT_REPO_ROOT:$GOAT_CONTAINER_WORKSPACE" \
-    -v /etc/localtime:/etc/localtime:ro \
-    --name "$GOAT_CONTAINER_NAME" \
-    --runtime nvidia \
-    --entrypoint /usr/local/bin/scripts/workspace-entrypoint.sh \
-    --workdir "$GOAT_CONTAINER_WORKSPACE" \
-    "$GOAT_BASE_NAME" \
-    /bin/bash "$container_script" "$@"
+  exec goat_exec_running_container "$container_script" "$@"
 }

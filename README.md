@@ -44,9 +44,9 @@ Normal iteration uses:
 manifests on the host, copies the repo-root Isaac ROS config from
 `.isaac_ros_common-config` into
 `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, then uses
-repo-owned container orchestration to launch or reuse the Isaac development
-container, install GOAT dependency packages, and prepare the workspace artifact
-directories.
+repo-owned container orchestration to launch or reuse a named Isaac
+development container, install GOAT dependency packages, and prepare the
+workspace artifact directories.
 
 `./scripts/dev/build.sh` is container-aware. From the host it uses repo-owned
 container orchestration to run the internal build helper inside the Isaac
