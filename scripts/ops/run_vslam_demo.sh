@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Launch the GOAT Visual SLAM demo inside the Isaac ROS container.
+# Launch the GOAT Visual SLAM demo in the supported Isaac ROS workflow.
 #
 # Purpose:
-#   Source the built GOAT workspace in the Isaac ROS container and start the
-#   default GOAT D435 Visual SLAM launch path.
+#   Dispatch to the container-local demo launcher. From the host this launches
+#   or reuses the Isaac ROS container; from inside the container it launches
+#   directly without re-running host Docker checks.
 #
 # Inputs:
 #   Optional extra `ros2 launch` arguments forwarded to
@@ -21,38 +22,41 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-run_dev_script="$repo_root/ros_ws/src/isaac_ros_common/scripts/run_dev.sh"
-workspace_setup="$repo_root/ros_ws/install/setup.bash"
+container_script="$repo_root/scripts/ops/_run_vslam_demo_in_container.sh"
 
-if [[ ! -f "$run_dev_script" ]]; then
-  echo "Isaac ROS run_dev.sh was not found at $run_dev_script." >&2
-  echo "Run ./scripts/dev/bootstrap.sh first." >&2
+is_inside_isaac_container() {
+  [[ -f /.dockerenv || "${ISAAC_ROS_WS:-}" == "/workspaces/isaac_ros-dev" ]]
+}
+
+resolve_isaac_launcher() {
+  local scripts_dir="$repo_root/ros_ws/src/isaac_ros_common/scripts"
+  local launcher=""
+
+  if [[ -f "$scripts_dir/run_dev.sh" ]]; then
+    launcher="$scripts_dir/run_dev.sh"
+  elif [[ -f "$scripts_dir/enter.sh" ]]; then
+    launcher="$scripts_dir/enter.sh"
+  fi
+
+  if [[ -z "$launcher" ]]; then
+    echo "Isaac ROS launcher was not found under $scripts_dir." >&2
+    echo "Run ./scripts/dev/bootstrap.sh first." >&2
+    exit 1
+  fi
+
+  printf '%s\n' "$launcher"
+}
+
+if [[ ! -f "$container_script" ]]; then
+  echo "Internal VSLAM demo helper not found at $container_script." >&2
   exit 1
 fi
 
-if [[ ! -f "$workspace_setup" ]]; then
-  echo "Workspace setup file not found at $workspace_setup." >&2
-  echo "Run ./scripts/dev/build.sh first." >&2
-  exit 1
+if is_inside_isaac_container; then
+  exec "$container_script" "$@"
 fi
 
 export TERM="${TERM:-xterm}"
+launcher="$(resolve_isaac_launcher)"
 
-exec "$run_dev_script" -d "$repo_root" -- -lc '
-set -e
-
-workspace_dir="/workspaces/isaac_ros-dev/ros_ws"
-workspace_setup="$workspace_dir/install/setup.bash"
-
-source /opt/ros/humble/setup.bash
-
-if [[ ! -f "$workspace_setup" ]]; then
-  echo "Workspace setup file not found at $workspace_setup." >&2
-  echo "Run ./scripts/dev/build.sh first." >&2
-  exit 1
-fi
-
-source "$workspace_setup"
-cd "$workspace_dir"
-ros2 launch goat_ros_launch sensors.launch.py "$@"
-' bash "$@"
+exec "$launcher" -d "$repo_root" -- /workspaces/isaac_ros-dev/scripts/ops/_run_vslam_demo_in_container.sh "$@"

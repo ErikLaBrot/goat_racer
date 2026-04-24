@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Build GOAT packages inside the Isaac ROS development container.
+# Build GOAT packages in the supported Isaac ROS workflow.
 #
 # Purpose:
-#   Rebuild the fast GOAT C++ library first, then rebuild the GOAT ROS
-#   workspace packages against the same install space.
+#   Dispatch to the container-local GOAT build helper. From the host this
+#   launches or reuses the Isaac ROS container; from inside the container it
+#   builds directly without re-running host Docker checks.
 #
 # Inputs:
 #   Optional extra `colcon build` arguments forwarded to both build phases.
@@ -21,65 +22,41 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-run_dev_script="$repo_root/ros_ws/src/isaac_ros_common/scripts/run_dev.sh"
-goat_ros_dir="$repo_root/ros_ws/src/goat_ros"
-goat_vesc_dir="$repo_root/external/goat_vesc"
+container_script="$repo_root/scripts/dev/_build_in_container.sh"
 
-if [[ ! -f "$run_dev_script" ]]; then
-  echo "Isaac ROS run_dev.sh was not found at $run_dev_script." >&2
-  echo "Run ./scripts/dev/bootstrap.sh first." >&2
+is_inside_isaac_container() {
+  [[ -f /.dockerenv || "${ISAAC_ROS_WS:-}" == "/workspaces/isaac_ros-dev" ]]
+}
+
+resolve_isaac_launcher() {
+  local scripts_dir="$repo_root/ros_ws/src/isaac_ros_common/scripts"
+  local launcher=""
+
+  if [[ -f "$scripts_dir/run_dev.sh" ]]; then
+    launcher="$scripts_dir/run_dev.sh"
+  elif [[ -f "$scripts_dir/enter.sh" ]]; then
+    launcher="$scripts_dir/enter.sh"
+  fi
+
+  if [[ -z "$launcher" ]]; then
+    echo "Isaac ROS launcher was not found under $scripts_dir." >&2
+    echo "Run ./scripts/dev/bootstrap.sh first." >&2
+    exit 1
+  fi
+
+  printf '%s\n' "$launcher"
+}
+
+if [[ ! -f "$container_script" ]]; then
+  echo "Internal build helper not found at $container_script." >&2
   exit 1
 fi
 
-if [[ ! -d "$goat_ros_dir" ]]; then
-  echo "GOAT ROS source tree not found at $goat_ros_dir." >&2
-  echo "Run ./scripts/dev/bootstrap.sh first." >&2
-  exit 1
-fi
-
-if [[ ! -d "$goat_vesc_dir" ]]; then
-  echo "GOAT VESC source tree not found at $goat_vesc_dir." >&2
-  echo "Run ./scripts/dev/bootstrap.sh first." >&2
-  exit 1
+if is_inside_isaac_container; then
+  exec "$container_script" "$@"
 fi
 
 export TERM="${TERM:-xterm}"
+launcher="$(resolve_isaac_launcher)"
 
-exec "$run_dev_script" -d "$repo_root" -- -lc '
-set -e
-
-repo_root="/workspaces/isaac_ros-dev"
-workspace_dir="$repo_root/ros_ws"
-goat_ros_dir="$workspace_dir/src/goat_ros"
-goat_vesc_dir="$repo_root/external/goat_vesc"
-
-source /opt/ros/humble/setup.bash
-
-mkdir -p "$workspace_dir/build" "$workspace_dir/install" "$workspace_dir/log"
-
-colcon build \
-  --base-paths "$goat_vesc_dir" \
-  --build-base "$workspace_dir/build" \
-  --install-base "$workspace_dir/install" \
-  --log-base "$workspace_dir/log" \
-  --symlink-install \
-  --packages-select goat_vesc \
-  "$@"
-
-workspace_setup="$workspace_dir/install/setup.bash"
-if [[ ! -f "$workspace_setup" ]]; then
-  echo "Workspace setup file not found at $workspace_setup after building goat_vesc." >&2
-  exit 1
-fi
-
-source "$workspace_setup"
-
-colcon build \
-  --base-paths "$goat_vesc_dir" "$goat_ros_dir" \
-  --build-base "$workspace_dir/build" \
-  --install-base "$workspace_dir/install" \
-  --log-base "$workspace_dir/log" \
-  --symlink-install \
-  --packages-select goat_vesc_ros goat_teleop goat_ros_launch \
-  "$@"
-' bash "$@"
+exec "$launcher" -d "$repo_root" -- /workspaces/isaac_ros-dev/scripts/dev/_build_in_container.sh "$@"

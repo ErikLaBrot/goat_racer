@@ -40,19 +40,23 @@ Normal iteration uses:
 ./scripts/ops/run_vslam_demo.sh
 ```
 
-`./scripts/dev/bootstrap.sh` syncs all root manifests, ensures the standard
-Isaac ROS config file exists at
+`./scripts/dev/bootstrap.sh` is the host-only setup step. It syncs all root
+manifests on the host, copies the repo-root Isaac ROS config from
+`.isaac_ros_common-config` into
 `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, launches the
 upstream Isaac development container, installs GOAT dependency packages, and
 prepares the workspace artifact directories.
 
-`./scripts/dev/build.sh` calls upstream
-`ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>`, builds
-`goat_vesc` first, then rebuilds `goat_vesc_ros`, `goat_teleop`, and
+`./scripts/dev/build.sh` is container-aware. From the host it calls the
+upstream Isaac launcher to run the repo-owned internal build helper inside the
+container; from inside the container it runs that helper directly. The build
+still rebuilds `goat_vesc` first, then `goat_vesc_ros`, `goat_teleop`, and
 `goat_ros_launch` against the shared install space.
 
 `./scripts/ops/run_vslam_demo.sh` is the thin operator-facing launch path. It
-starts the Isaac container, sources the built workspace, and launches
+is also container-aware: from the host it starts or reuses the Isaac container,
+and from inside the container it launches directly without re-running host
+Docker checks. In both cases it sources the built workspace and launches
 `goat_ros_launch/sensors.launch.py`.
 
 ## Layout

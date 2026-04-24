@@ -4,7 +4,7 @@
 # Purpose:
 #   Sync manifest-managed repositories, ensure the Isaac ROS image config is
 #   present, launch the upstream Isaac dev container, install dependencies, and
-#   prepare the workspace artifact directories.
+#   prepare the workspace artifact directories from the host.
 #
 # Inputs:
 #   Root-level `*.repos` manifests plus a host with `vcs` and Docker access.
@@ -22,10 +22,39 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-run_dev_script="$repo_root/ros_ws/src/isaac_ros_common/scripts/run_dev.sh"
-isaac_config_file="$repo_root/ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config"
+root_isaac_config_file="$repo_root/.isaac_ros_common-config"
+isaac_repo_dir="$repo_root/ros_ws/src/isaac_ros_common"
+isaac_scripts_dir="$repo_root/ros_ws/src/isaac_ros_common/scripts"
+isaac_config_file="$isaac_scripts_dir/.isaac_ros_common-config"
 goat_ros_dir="$repo_root/ros_ws/src/goat_ros"
 goat_vesc_dir="$repo_root/external/goat_vesc"
+
+is_inside_isaac_container() {
+  [[ -f /.dockerenv || "${ISAAC_ROS_WS:-}" == "/workspaces/isaac_ros-dev" ]]
+}
+
+resolve_isaac_launcher() {
+  local launcher=""
+
+  if [[ -f "$isaac_scripts_dir/run_dev.sh" ]]; then
+    launcher="$isaac_scripts_dir/run_dev.sh"
+  elif [[ -f "$isaac_scripts_dir/enter.sh" ]]; then
+    launcher="$isaac_scripts_dir/enter.sh"
+  fi
+
+  if [[ -z "$launcher" ]]; then
+    echo "Isaac ROS launcher was not found under $isaac_scripts_dir after manifest sync." >&2
+    echo "Check isaac_ros.repos and rerun ./scripts/dev/bootstrap.sh." >&2
+    exit 1
+  fi
+
+  printf '%s\n' "$launcher"
+}
+
+if is_inside_isaac_container; then
+  echo "./scripts/dev/bootstrap.sh must be run on the host, not from inside the Isaac ROS container." >&2
+  exit 1
+fi
 
 if ! command -v vcs >/dev/null 2>&1; then
   echo "vcs was not found on the host." >&2
@@ -62,16 +91,19 @@ if [[ ${#repo_dirs[@]} -gt 0 ]]; then
   vcs pull "${repo_dirs[@]}"
 fi
 
-if [[ ! -f "$run_dev_script" ]]; then
-  echo "Isaac ROS run_dev.sh was not found at $run_dev_script after manifest sync." >&2
+if [[ ! -f "$root_isaac_config_file" ]]; then
+  echo "Repo Isaac ROS config was not found at $root_isaac_config_file." >&2
+  exit 1
+fi
+
+if [[ ! -d "$isaac_repo_dir" ]]; then
+  echo "Isaac ROS source tree not found at $isaac_repo_dir after manifest sync." >&2
   echo "Check isaac_ros.repos and rerun ./scripts/dev/bootstrap.sh." >&2
   exit 1
 fi
 
 mkdir -p "$(dirname "$isaac_config_file")"
-cat > "$isaac_config_file" <<'EOF'
-CONFIG_IMAGE_KEY=ros2_humble.realsense
-EOF
+cp "$root_isaac_config_file" "$isaac_config_file"
 
 if [[ ! -d "$goat_ros_dir" ]]; then
   echo "GOAT ROS source tree not found at $goat_ros_dir after manifest sync." >&2
@@ -84,8 +116,9 @@ if [[ ! -d "$goat_vesc_dir" ]]; then
 fi
 
 export TERM="${TERM:-xterm}"
+launcher="$(resolve_isaac_launcher)"
 
-exec "$run_dev_script" -d "$repo_root" -- -lc '
+exec "$launcher" -d "$repo_root" -- -lc '
 set -e
 
 repo_root="/workspaces/isaac_ros-dev"

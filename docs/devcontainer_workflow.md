@@ -11,11 +11,16 @@ The supported Stage 2A path is:
 Those repo helpers call Isaac ROS tooling directly. They do not rely on Docker
 Compose as the primary container workflow.
 
-`./scripts/dev/bootstrap.sh` and `./scripts/dev/build.sh` invoke the vendored
-upstream `ros_ws/src/isaac_ros_common/scripts/run_dev.sh` directly.
-`./scripts/dev/bootstrap.sh` also ensures the standard Isaac ROS config file
-exists at `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config` with
-`CONFIG_IMAGE_KEY=ros2_humble.realsense`.
+`./scripts/dev/bootstrap.sh` is the host-only entrypoint. It syncs repos on the
+host, then copies the repo-root Isaac config file
+`.isaac_ros_common-config` into
+`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`.
+
+`./scripts/dev/build.sh` and `./scripts/ops/run_vslam_demo.sh` are
+container-aware. From the host they invoke the vendored upstream Isaac launcher
+under `ros_ws/src/isaac_ros_common/scripts/`; from inside the container they
+run repo-owned internal helper scripts directly instead of re-running host
+Docker setup logic.
 
 ## Current Status
 
