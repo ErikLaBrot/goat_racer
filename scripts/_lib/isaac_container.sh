@@ -251,5 +251,6 @@ goat_exec_in_isaac_container() {
     goat_wait_for_running_container
   fi
 
-  exec goat_exec_running_container "$container_script" "$@"
+  goat_exec_running_container "$container_script" "$@"
+  exit $?
 }
