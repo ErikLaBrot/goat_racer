@@ -26,11 +26,12 @@ fi
 
 mkdir -p "$workspace_dir/build" "$workspace_dir/install" "$workspace_dir/log"
 
-colcon build \
+colcon \
+  --log-base "$workspace_dir/log" \
+  build \
   --base-paths "$goat_vesc_dir" \
   --build-base "$workspace_dir/build" \
   --install-base "$workspace_dir/install" \
-  --log-base "$workspace_dir/log" \
   --symlink-install \
   --packages-select goat_vesc \
   "$@"
@@ -42,11 +43,12 @@ fi
 
 goat_safe_source "$workspace_setup"
 
-colcon build \
+colcon \
+  --log-base "$workspace_dir/log" \
+  build \
   --base-paths "$goat_vesc_dir" "$goat_ros_dir" \
   --build-base "$workspace_dir/build" \
   --install-base "$workspace_dir/install" \
-  --log-base "$workspace_dir/log" \
   --symlink-install \
   --packages-select goat_vesc_ros goat_teleop goat_ros_launch \
   "$@"
