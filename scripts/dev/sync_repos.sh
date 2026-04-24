@@ -22,8 +22,8 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-run_dev_script="$repo_root/src/isaac_ros_common/scripts/run_dev.sh"
-isaac_config_file="$repo_root/src/isaac_ros_common/scripts/.isaac_ros_common-config"
+run_dev_script="$repo_root/ros_ws/src/isaac_ros_common/scripts/run_dev.sh"
+isaac_config_file="$repo_root/ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config"
 
 ensure_standard_isaac_config() {
   local config_dir
