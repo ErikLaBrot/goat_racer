@@ -25,16 +25,20 @@ From the repo root:
 ./scripts/ops/run_vslam_demo.sh
 ```
 
-`./scripts/dev/bootstrap.sh` syncs manifest-managed repositories, ensures the
-standard Isaac ROS config file exists at
+`./scripts/dev/bootstrap.sh` is the host-only setup step. It syncs
+manifest-managed repositories on the host, copies the repo-root Isaac config
+from `.isaac_ros_common-config` into
 `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, launches the
 Isaac container, installs dependency packages, and prepares the workspace.
 `./scripts/dev/build.sh` then rebuilds the GOAT package set inside that
-container-managed environment.
+container-managed environment. If you run it from inside the container, it
+builds directly without re-triggering host Docker logic.
 
 ## Default Demo Behavior
 
 - `./scripts/ops/run_vslam_demo.sh` is the normal deployment and demo entrypoint.
+- It is container-aware, so running it from inside the Isaac container skips
+  host-side Docker/user/group checks.
 - It launches `goat_ros_launch/sensors.launch.py`, which defaults to the GOAT
   D435 Visual SLAM wrapper from `goat_ros_launch/config/sensors.yaml`.
 - The default GOAT D435 profile is stereo-only:
