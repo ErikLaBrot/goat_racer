@@ -15,47 +15,45 @@ development container to simplify setup.
 ## Deployment Workflow
 
 1. Clone the repository.
-2. Sync nested repositories:
+2. Prepare a fresh checkout or robot:
 
    ```bash
-   ./scripts/dev/sync_repos.sh
+   ./scripts/dev/bootstrap.sh
    ```
 
-3. Enter the Isaac ROS development container:
+3. Build the GOAT packages:
 
    ```bash
-   ./scripts/dev/enter.sh
+   ./scripts/dev/build.sh
    ```
 
-4. Install package dependencies:
+4. Launch the default GOAT D435 Visual SLAM demo:
 
    ```bash
-   ./scripts/dev/rosdep_install.sh
+   ./scripts/ops/run_vslam_demo.sh
    ```
 
-5. Build the GOAT workspace packages:
+Normal iteration uses:
 
-   ```bash
-   ./scripts/dev/build_ws.sh
-   ```
+```bash
+./scripts/dev/build.sh
+./scripts/ops/run_vslam_demo.sh
+```
 
-6. Launch the default GOAT D435 Visual SLAM demo:
+`./scripts/dev/bootstrap.sh` syncs all root manifests, ensures the standard
+Isaac ROS config file exists at
+`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, launches the
+upstream Isaac development container, installs GOAT dependency packages, and
+prepares the workspace artifact directories.
 
-   ```bash
-   ./scripts/ops/run_vslam.sh
-   ```
+`./scripts/dev/build.sh` calls upstream
+`ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>`, builds
+`goat_vesc` first, then rebuilds `goat_vesc_ros`, `goat_teleop`, and
+`goat_ros_launch` against the shared install space.
 
-`./scripts/dev/enter.sh` is the primary way to enter the dev environment. It
-execs upstream `ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>`.
-`./scripts/dev/sync_repos.sh` ensures the standard Isaac ROS config file exists
-at `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config` with the
-upstream `ros2_humble.realsense` image key.
-
-`./scripts/dev/build_ws.sh` builds GOAT-owned packages only from
-`ros_ws/src/goat_ros` and `external/goat_vesc`. `./scripts/dev/rosdep_install.sh`
-installs missing host dependencies and pulls Isaac ROS runtime packages such as
-`isaac_ros_visual_slam` as prebuilt Debian packages instead of relying on a
-source checkout.
+`./scripts/ops/run_vslam_demo.sh` is the thin operator-facing launch path. It
+starts the Isaac container, sources the built workspace, and launches
+`goat_ros_launch/sensors.launch.py`.
 
 ## Layout
 

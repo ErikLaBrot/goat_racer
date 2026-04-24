@@ -4,19 +4,17 @@ This document is secondary to the Stage 2A Isaac ROS workflow.
 
 The supported Stage 2A path is:
 
-1. `./scripts/dev/sync_repos.sh`
-2. `./scripts/dev/enter.sh`
-3. `./scripts/dev/rosdep_install.sh`
-4. `./scripts/dev/build_ws.sh`
-5. `./scripts/ops/run_vslam.sh`
+1. `./scripts/dev/bootstrap.sh`
+2. `./scripts/dev/build.sh`
+3. `./scripts/ops/run_vslam_demo.sh`
 
 Those repo helpers call Isaac ROS tooling directly. They do not rely on Docker
 Compose as the primary container workflow.
 
-`./scripts/dev/enter.sh` delegates to the vendored upstream
-`ros_ws/src/isaac_ros_common/scripts/run_dev.sh`. `./scripts/dev/sync_repos.sh`
-ensures the standard Isaac ROS config file exists at
-`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config` with
+`./scripts/dev/bootstrap.sh` and `./scripts/dev/build.sh` invoke the vendored
+upstream `ros_ws/src/isaac_ros_common/scripts/run_dev.sh` directly.
+`./scripts/dev/bootstrap.sh` also ensures the standard Isaac ROS config file
+exists at `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config` with
 `CONFIG_IMAGE_KEY=ros2_humble.realsense`.
 
 ## Current Status
@@ -30,11 +28,10 @@ ensures the standard Isaac ROS config file exists at
 
 If you open the repo in VS Code and choose "Reopen in Container", treat that as
 a secondary workflow. The supported command-line flow still uses
-`./scripts/dev/enter.sh`, which delegates to Isaac ROS `run_dev.sh`.
+the three repo-owned scripts above, which delegate to Isaac ROS `run_dev.sh`.
 
 ## Workspace Layout
 
 - `ros_ws/src/isaac_ros_common` for the upstream Isaac ROS tooling checkout
 - `ros_ws/src/goat_ros` for project ROS packages
 - `external/` for non-ROS dependencies
-- `ros_ws/bags` for rosbag output when you choose to record manually

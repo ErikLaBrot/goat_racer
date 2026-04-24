@@ -20,22 +20,21 @@ stereo-only VSLAM demo.
 From the repo root:
 
 ```bash
-./scripts/dev/sync_repos.sh
-./scripts/dev/enter.sh
-./scripts/dev/rosdep_install.sh
-./scripts/dev/build_ws.sh
-./scripts/ops/run_vslam.sh
+./scripts/dev/bootstrap.sh
+./scripts/dev/build.sh
+./scripts/ops/run_vslam_demo.sh
 ```
 
-`./scripts/dev/enter.sh` remains the primary container workflow. It calls
-upstream `ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d /path/to/repo`.
-`./scripts/dev/sync_repos.sh` ensures the standard Isaac ROS config file exists
-at `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config` with
-`CONFIG_IMAGE_KEY=ros2_humble.realsense`.
+`./scripts/dev/bootstrap.sh` syncs manifest-managed repositories, ensures the
+standard Isaac ROS config file exists at
+`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, launches the
+Isaac container, installs dependency packages, and prepares the workspace.
+`./scripts/dev/build.sh` then rebuilds the GOAT package set inside that
+container-managed environment.
 
 ## Default Demo Behavior
 
-- `./scripts/ops/run_vslam.sh` is the normal deployment and demo entrypoint.
+- `./scripts/ops/run_vslam_demo.sh` is the normal deployment and demo entrypoint.
 - It launches `goat_ros_launch/sensors.launch.py`, which defaults to the GOAT
   D435 Visual SLAM wrapper from `goat_ros_launch/config/sensors.yaml`.
 - The default GOAT D435 profile is stereo-only:
@@ -43,15 +42,16 @@ at `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config` with
   - color disabled
   - depth disabled
   - IMU fusion disabled unless you pass `enable_imu_fusion:=true`
-- `./scripts/dev/rosdep_install.sh` installs prebuilt Isaac ROS runtime
-  packages for the GOAT source trees.
-- `./scripts/dev/build_ws.sh` builds GOAT-owned packages only. It does not
-  source-build `isaac_ros_visual_slam` in the regular workspace.
+- `./scripts/dev/build.sh` builds `goat_vesc` first, then `goat_vesc_ros`,
+  `goat_teleop`, and `goat_ros_launch`.
+- Isaac ROS runtime packages such as `isaac_ros_visual_slam` are still expected
+  to come from the container image and `rosdep` rather than a source build in
+  this repo.
 
 CLI overrides still work when needed:
 
 ```bash
-./scripts/ops/run_vslam.sh sensor_launch_arguments:="enable_imu_fusion:=true"
+./scripts/ops/run_vslam_demo.sh sensor_launch_arguments:="enable_imu_fusion:=true"
 ```
 
 ## Optional Debug Check
@@ -85,7 +85,7 @@ ros2 pkg prefix isaac_ros_visual_slam
 
 ## Limits
 
-- Full robot bringup, teleop, rosbag helpers, and VIO remain available, but the
-  primary success path for this stage ends with `./scripts/ops/run_vslam.sh`.
+- The supported operator-facing workflow is intentionally limited to
+  `bootstrap.sh`, `build.sh`, and `run_vslam_demo.sh`.
 - The GOAT D435 wrapper keeps zeroed default static transforms for bench
   testing; replace them with measured transforms before robot evaluation.
