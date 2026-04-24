@@ -28,9 +28,9 @@ From the repo root:
 ```
 
 `./scripts/dev/enter.sh` remains the primary container workflow. It calls
-upstream `src/isaac_ros_common/scripts/run_dev.sh -d /path/to/repo`.
+upstream `ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d /path/to/repo`.
 `./scripts/dev/sync_repos.sh` ensures the standard Isaac ROS config file exists
-at `src/isaac_ros_common/scripts/.isaac_ros_common-config` with
+at `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config` with
 `CONFIG_IMAGE_KEY=ros2_humble.realsense`.
 
 ## Default Demo Behavior

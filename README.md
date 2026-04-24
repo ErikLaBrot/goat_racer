@@ -46,10 +46,10 @@ development container to simplify setup.
    ```
 
 `./scripts/dev/enter.sh` is the primary way to enter the dev environment. It
-execs upstream `src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>`.
+execs upstream `ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>`.
 `./scripts/dev/sync_repos.sh` ensures the standard Isaac ROS config file exists
-at `src/isaac_ros_common/scripts/.isaac_ros_common-config` with the upstream
-`ros2_humble.realsense` image key.
+at `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config` with the
+upstream `ros2_humble.realsense` image key.
 
 `./scripts/dev/build_ws.sh` builds GOAT-owned packages only from
 `ros_ws/src/goat_ros` and `external/goat_vesc`. `./scripts/dev/rosdep_install.sh`
@@ -61,8 +61,8 @@ source checkout.
 
 - `ros_ws/` is the main ROS workspace root.
 - `ros_ws/src/goat_ros` is reserved for GOAT ROS packages.
-- `src/isaac_ros_common` is the vendored upstream Isaac ROS tooling checkout
-  used by `run_dev.sh`.
+- `ros_ws/src/isaac_ros_common` is the vendored upstream Isaac ROS tooling
+  checkout used by `run_dev.sh`.
 - `external/` is reserved for non-ROS project dependencies.
 - `.devcontainer/` remains a secondary workflow and is not the source of truth
   for the supported Jetson deployment path.

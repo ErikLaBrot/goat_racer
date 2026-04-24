@@ -22,7 +22,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-run_dev_script="$repo_root/src/isaac_ros_common/scripts/run_dev.sh"
+run_dev_script="$repo_root/ros_ws/src/isaac_ros_common/scripts/run_dev.sh"
 
 if [[ ! -f "$run_dev_script" ]]; then
   echo "Isaac ROS run_dev.sh was not found at $run_dev_script." >&2
