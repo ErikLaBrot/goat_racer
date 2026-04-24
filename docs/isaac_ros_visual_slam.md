@@ -31,11 +31,12 @@ from `.isaac_ros_common-config` into
 `ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, launches the
 Isaac container through upstream
 `ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>`, installs
-dependency packages, and prepares the workspace. That container is then reused
-by `./scripts/dev/build.sh` and `./scripts/ops/run_vslam_demo.sh` through the
-same upstream entrypoint. `./scripts/dev/build.sh` then rebuilds the GOAT
-package set inside that environment. If you run it from inside the container,
-it builds directly without re-triggering host container startup logic.
+dependency packages, and prepares the workspace. The synced Isaac config also
+selects a repo-owned GOAT image layer so `isaac_ros_visual_slam` is available
+in every upstream `run_dev.sh` container rather than only in transient
+bootstrap state. `./scripts/dev/build.sh` then rebuilds the GOAT package set
+inside that environment. If you run it from inside the container, it builds
+directly without re-triggering host container startup logic.
 
 ## Default Demo Behavior
 
@@ -52,9 +53,9 @@ it builds directly without re-triggering host container startup logic.
   - IMU fusion disabled unless you pass `enable_imu_fusion:=true`
 - `./scripts/dev/build.sh` builds `goat_vesc` first, then `goat_vesc_ros`,
   `goat_teleop`, and `goat_ros_launch`.
-- Isaac ROS runtime packages such as `isaac_ros_visual_slam` are still expected
-  to come from the container image and `rosdep` rather than a source build in
-  this repo.
+- Isaac ROS runtime packages such as `isaac_ros_visual_slam` are expected to
+  come from the upstream-built container image layer rather than a source build
+  in this repo.
 
 CLI overrides still work when needed:
 
