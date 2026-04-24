@@ -8,20 +8,21 @@ The supported Stage 2A path is:
 2. `./scripts/dev/build.sh`
 3. `./scripts/ops/run_vslam_demo.sh`
 
-Those repo helpers use repo-owned container orchestration plus vendored Isaac
-image build tooling. They do not rely on Docker Compose as the primary
-container workflow.
+Those repo helpers delegate container lifecycle management to the vendored
+upstream Isaac ROS `run_dev.sh` entrypoint. They do not rely on Docker Compose
+as the primary container workflow.
 
 `./scripts/dev/bootstrap.sh` is the host-only entrypoint. It syncs repos on the
 host, then copies the repo-root Isaac config file
 `.isaac_ros_common-config` into
-`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`.
+`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config` before invoking
+`ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>`.
 
 `./scripts/dev/build.sh` and `./scripts/ops/run_vslam_demo.sh` are
-container-aware. From the host they use repo-owned container orchestration to
-start or reuse a named Isaac container; from inside the container they run
-repo-owned internal helper scripts directly instead of re-running host Docker
-setup logic.
+container-aware. From the host they use that same upstream `run_dev.sh`
+entrypoint to start or reuse the Isaac container; from inside the container
+they run repo-owned internal helper scripts directly instead of re-running host
+container startup logic.
 
 ## Current Status
 

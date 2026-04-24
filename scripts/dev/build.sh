@@ -3,8 +3,8 @@
 #
 # Purpose:
 #   Dispatch to the container-local GOAT build helper. From the host this
-#   launches or reuses the Isaac ROS container; from inside the container it
-#   builds directly without re-running host Docker checks.
+#   launches or reuses the Isaac ROS dev container through upstream
+#   `run_dev.sh`; from inside the container it builds directly.
 #
 # Inputs:
 #   Optional extra `colcon build` arguments forwarded to both build phases.
@@ -51,4 +51,4 @@ if [[ ! -d "$goat_vesc_dir" ]]; then
 fi
 
 export TERM="${TERM:-xterm}"
-goat_exec_in_isaac_container "$container_script_in_workspace" "$@"
+goat_run_in_isaac_dev "$container_script_in_workspace" "$@"

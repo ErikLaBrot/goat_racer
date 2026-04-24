@@ -3,8 +3,8 @@
 #
 # Purpose:
 #   Dispatch to the container-local demo launcher. From the host this launches
-#   or reuses the Isaac ROS container; from inside the container it launches
-#   directly without re-running host Docker checks.
+#   or reuses the Isaac ROS dev container through upstream `run_dev.sh`; from
+#   inside the container it launches directly.
 #
 # Inputs:
 #   Optional extra `ros2 launch` arguments forwarded to
@@ -44,4 +44,4 @@ if [[ ! -f "$workspace_setup" ]]; then
 fi
 
 export TERM="${TERM:-xterm}"
-goat_exec_in_isaac_container "$container_script_in_workspace" "$@"
+goat_run_in_isaac_dev "$container_script_in_workspace" "$@"

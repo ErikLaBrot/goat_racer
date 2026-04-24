@@ -43,22 +43,23 @@ Normal iteration uses:
 `./scripts/dev/bootstrap.sh` is the host-only setup step. It syncs all root
 manifests on the host, copies the repo-root Isaac ROS config from
 `.isaac_ros_common-config` into
-`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, then uses
-repo-owned container orchestration to launch or reuse a named Isaac
-development container, install GOAT dependency packages, and prepare the
-workspace artifact directories.
+`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, then uses the
+vendored upstream
+`ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>` entrypoint to
+pull, build, or reuse the Isaac development container, install GOAT dependency
+packages, and prepare the workspace artifact directories.
 
-`./scripts/dev/build.sh` is container-aware. From the host it uses repo-owned
-container orchestration to run the internal build helper inside the Isaac
-container; from inside the container it runs that helper directly. The build
-still rebuilds `goat_vesc` first, then `goat_vesc_ros`, `goat_teleop`, and
-`goat_ros_launch` against the shared install space.
+`./scripts/dev/build.sh` is container-aware. From the host it uses upstream
+`run_dev.sh` to run the internal build helper inside the Isaac container; from
+inside the container it runs that helper directly. The build still rebuilds
+`goat_vesc` first, then `goat_vesc_ros`, `goat_teleop`, and `goat_ros_launch`
+against the shared install space.
 
 `./scripts/ops/run_vslam_demo.sh` is the thin operator-facing launch path. It
 is also container-aware: from the host it starts or reuses the Isaac container
-through the same repo-owned orchestration, and from inside the container it
-launches directly without re-running host Docker checks. In both cases it
-sources the built workspace and launches `goat_ros_launch/sensors.launch.py`.
+through the same upstream `run_dev.sh` entrypoint, and from inside the
+container it launches directly. In both cases it sources the built workspace
+and launches `goat_ros_launch/sensors.launch.py`.
 
 ## Layout
 

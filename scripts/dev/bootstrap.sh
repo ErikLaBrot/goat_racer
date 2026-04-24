@@ -3,8 +3,9 @@
 #
 # Purpose:
 #   Sync manifest-managed repositories, ensure the Isaac ROS image config is
-#   present, launch the upstream Isaac dev container, install dependencies, and
-#   prepare the workspace artifact directories from the host.
+#   present, delegate container lifecycle management to upstream Isaac ROS
+#   tooling, install dependencies, and prepare the workspace artifact
+#   directories from the host.
 #
 # Inputs:
 #   Root-level `*.repos` manifests plus a host with `vcs` and Docker access.
@@ -26,6 +27,7 @@ source "$repo_root/scripts/_lib/isaac_container.sh"
 
 root_isaac_config_file="$repo_root/.isaac_ros_common-config"
 isaac_repo_dir="$repo_root/ros_ws/src/isaac_ros_common"
+run_dev_script="$isaac_repo_dir/scripts/run_dev.sh"
 goat_ros_dir="$repo_root/ros_ws/src/goat_ros"
 goat_vesc_dir="$repo_root/external/goat_vesc"
 container_script="$repo_root/scripts/dev/_bootstrap_in_container.sh"
@@ -82,6 +84,12 @@ if [[ ! -d "$isaac_repo_dir" ]]; then
   exit 1
 fi
 
+if [[ ! -x "$run_dev_script" ]]; then
+  echo "Isaac ROS run_dev.sh was not found at $run_dev_script after manifest sync." >&2
+  echo "Check isaac_ros.repos and rerun ./scripts/dev/bootstrap.sh." >&2
+  exit 1
+fi
+
 if [[ ! -f "$container_script" ]]; then
   echo "Internal bootstrap helper not found at $container_script." >&2
   exit 1
@@ -100,4 +108,4 @@ fi
 goat_sync_repo_isaac_config
 
 export TERM="${TERM:-xterm}"
-goat_exec_in_isaac_container "$container_script_in_workspace"
+goat_run_in_isaac_dev "$container_script_in_workspace"
