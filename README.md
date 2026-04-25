@@ -40,6 +40,12 @@ Normal iteration uses:
 ./scripts/ops/run_vslam_demo.sh
 ```
 
+Open a second shell for ROS operations with:
+
+```bash
+./scripts/dev/enter.sh
+```
+
 `./scripts/dev/bootstrap.sh` is the host-only setup step. It syncs all root
 manifests on the host, copies the repo-root Isaac ROS config from
 `.isaac_ros_common-config` into
@@ -65,9 +71,9 @@ container it launches directly. In both cases it sources the built workspace
 and launches `goat_ros_launch/sensors.launch.py`.
 
 For manual desktop debugging from inside the container on a local Jetson
-session, attach with upstream `run_dev.sh`, launch the demo in one container
-shell, then attach again in a second shell and run `xeyes`, `glxinfo -B`, or
-`rviz2` directly.
+session, launch the demo in one terminal, then use `./scripts/dev/enter.sh` in
+a second terminal and run `ros2 topic list`, `xeyes`, `glxinfo -B`, or `rviz2`
+directly.
 
 ## Layout
 

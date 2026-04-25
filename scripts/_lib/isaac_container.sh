@@ -71,3 +71,15 @@ goat_run_in_isaac_dev() {
 
   exec "$GOAT_RUN_DEV_SCRIPT" -d "$GOAT_REPO_ROOT" -- "$container_script" "$@"
 }
+
+goat_enter_isaac_dev() {
+  goat_sync_repo_isaac_support_files
+
+  if [[ ! -x "$GOAT_RUN_DEV_SCRIPT" ]]; then
+    echo "Isaac ROS run_dev.sh was not found at $GOAT_RUN_DEV_SCRIPT." >&2
+    echo "Run ./scripts/dev/bootstrap.sh first." >&2
+    exit 1
+  fi
+
+  exec "$GOAT_RUN_DEV_SCRIPT" -d "$GOAT_REPO_ROOT"
+}

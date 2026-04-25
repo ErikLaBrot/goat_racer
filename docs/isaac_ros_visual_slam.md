@@ -66,31 +66,42 @@ CLI overrides still work when needed:
 ./scripts/ops/run_vslam_demo.sh sensor_launch_arguments:="enable_imu_fusion:=true"
 ```
 
-## Manual RViz Check
+## ROS Ops Shell
 
-For the first-pass desktop debugging workflow, start from a local Jetson
-desktop terminal with `DISPLAY` already set.
-
-From the repo root on the host:
-
-```bash
-ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d "$PWD"
-```
-
-Inside the first container shell:
+Start the VSLAM demo in one terminal:
 
 ```bash
 ./scripts/ops/run_vslam_demo.sh
 ```
 
-From a second local desktop terminal on the host, attach again:
+From a second terminal on the host, attach to the same upstream-managed Isaac
+environment:
 
 ```bash
-ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d "$PWD"
+./scripts/dev/enter.sh
 ```
 
-Inside the second container shell, do a quick GUI preflight and then start
-RViz manually:
+Inside that second shell, run ROS operations directly:
+
+```bash
+ros2 topic list
+ros2 topic echo /visual_slam/tracking/odometry --once
+rviz2
+```
+
+## Manual RViz Check
+
+For the first-pass desktop debugging workflow, start from a local Jetson
+desktop terminal with `DISPLAY` already set.
+
+From a second local desktop terminal on the host:
+
+```bash
+./scripts/dev/enter.sh
+```
+
+Inside the container shell, do a quick GUI preflight and then start RViz
+manually:
 
 ```bash
 xeyes
