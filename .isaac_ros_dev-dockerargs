@@ -1,2 +1,2 @@
--e QT_X11_NO_MITSHM=1
--e XAUTHORITY=/home/admin/.Xauthority
+--env=QT_X11_NO_MITSHM=1
+--env=XAUTHORITY=/home/admin/.Xauthority
