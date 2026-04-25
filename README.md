@@ -87,6 +87,6 @@ directly.
 
 ## Additional Docs
 
-- [Devcontainer workflow](/home/goat/goat/goat_racer/docs/devcontainer_workflow.md)
-- [Version matrix](/home/goat/goat/goat_racer/docs/version_matrix.md)
-- [Isaac ROS Visual SLAM notes](/home/goat/goat/goat_racer/docs/isaac_ros_visual_slam.md)
+- [Devcontainer workflow](docs/devcontainer_workflow.md)
+- [Version matrix](docs/version_matrix.md)
+- [Isaac ROS Visual SLAM notes](docs/isaac_ros_visual_slam.md)

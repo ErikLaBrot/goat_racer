@@ -146,7 +146,7 @@ which glxinfo
 
 ## Limits
 
-- The supported operator-facing workflow is intentionally limited to
-  `bootstrap.sh`, `build.sh`, and `run_vslam_demo.sh`.
+- The supported manual workflow is intentionally limited to
+  `bootstrap.sh`, `build.sh`, `enter.sh`, and `run_vslam_demo.sh`.
 - The GOAT D435 wrapper keeps zeroed default static transforms for bench
   testing; replace them with measured transforms before robot evaluation.

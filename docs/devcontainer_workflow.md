@@ -45,7 +45,7 @@ manual GUI tools like `rviz2`.
 
 If you open the repo in VS Code and choose "Reopen in Container", treat that as
 a secondary workflow. The supported command-line flow still uses
-the three repo-owned scripts above.
+the repo-owned scripts above.
 
 ## Workspace Layout
 
