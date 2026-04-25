@@ -3,8 +3,9 @@
 #
 # Purpose:
 #   Sync manifest-managed repositories, ensure the Isaac ROS image config is
-#   present, delegate container lifecycle management to upstream Isaac ROS
-#   tooling, install dependencies, and prepare the workspace artifact
+#   present, sync repo-owned Isaac support files into the vendored upstream
+#   scripts directory, delegate container lifecycle management to upstream
+#   Isaac ROS tooling, install dependencies, and prepare the workspace artifact
 #   directories from the host.
 #
 # Inputs:
@@ -26,6 +27,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$repo_root/scripts/_lib/isaac_container.sh"
 
 root_isaac_config_file="$repo_root/.isaac_ros_common-config"
+root_isaac_docker_args_file="$repo_root/.isaac_ros_dev-dockerargs"
 isaac_repo_dir="$repo_root/ros_ws/src/isaac_ros_common"
 run_dev_script="$isaac_repo_dir/scripts/run_dev.sh"
 goat_ros_dir="$repo_root/ros_ws/src/goat_ros"
@@ -78,6 +80,11 @@ if [[ ! -f "$root_isaac_config_file" ]]; then
   exit 1
 fi
 
+if [[ ! -f "$root_isaac_docker_args_file" ]]; then
+  echo "Repo Isaac ROS Docker args file was not found at $root_isaac_docker_args_file." >&2
+  exit 1
+fi
+
 if [[ ! -d "$isaac_repo_dir" ]]; then
   echo "Isaac ROS source tree not found at $isaac_repo_dir after manifest sync." >&2
   echo "Check isaac_ros.repos and rerun ./scripts/dev/bootstrap.sh." >&2
@@ -105,7 +112,7 @@ if [[ ! -d "$goat_vesc_dir" ]]; then
   exit 1
 fi
 
-goat_sync_repo_isaac_config
+goat_sync_repo_isaac_support_files
 
 export TERM="${TERM:-xterm}"
 goat_run_in_isaac_dev "$container_script_in_workspace"

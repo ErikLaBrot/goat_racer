@@ -15,14 +15,20 @@ as the primary container workflow.
 `./scripts/dev/bootstrap.sh` is the host-only entrypoint. It syncs repos on the
 host, then copies the repo-root Isaac config file
 `.isaac_ros_common-config` into
-`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config` before invoking
-`ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>`.
+`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config` and the
+repo-root upstream Docker args file `.isaac_ros_dev-dockerargs` into
+`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_dev-dockerargs` before
+invoking `ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>`.
 
 `./scripts/dev/build.sh` and `./scripts/ops/run_vslam_demo.sh` are
 container-aware. From the host they use that same upstream `run_dev.sh`
 entrypoint to start or reuse the Isaac container; from inside the container
 they run repo-owned internal helper scripts directly instead of re-running host
 container startup logic.
+
+The synced upstream Docker args file is also the repo-owned place for small
+container runtime tweaks such as Qt/X11 compatibility environment variables for
+manual GUI tools like `rviz2`.
 
 ## Current Status
 

@@ -28,15 +28,18 @@ From the repo root:
 `./scripts/dev/bootstrap.sh` is the host-only setup step. It syncs
 manifest-managed repositories on the host, copies the repo-root Isaac config
 from `.isaac_ros_common-config` into
-`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, launches the
+`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, syncs the
+repo-root upstream Docker args from `.isaac_ros_dev-dockerargs` into
+`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_dev-dockerargs`, launches the
 Isaac container through upstream
 `ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>`, installs
 dependency packages, and prepares the workspace. The synced Isaac config also
-selects a repo-owned GOAT image layer so `isaac_ros_visual_slam` is available
-in every upstream `run_dev.sh` container rather than only in transient
-bootstrap state. `./scripts/dev/build.sh` then rebuilds the GOAT package set
-inside that environment. If you run it from inside the container, it builds
-directly without re-triggering host container startup logic.
+selects a repo-owned GOAT image layer so `isaac_ros_visual_slam`, `rviz2`,
+`xeyes`, and `glxinfo` are available in every upstream `run_dev.sh` container
+rather than only in transient bootstrap state. `./scripts/dev/build.sh` then
+rebuilds the GOAT package set inside that environment. If you run it from
+inside the container, it builds directly without re-triggering host container
+startup logic.
 
 ## Default Demo Behavior
 
@@ -62,6 +65,41 @@ CLI overrides still work when needed:
 ```bash
 ./scripts/ops/run_vslam_demo.sh sensor_launch_arguments:="enable_imu_fusion:=true"
 ```
+
+## Manual RViz Check
+
+For the first-pass desktop debugging workflow, start from a local Jetson
+desktop terminal with `DISPLAY` already set.
+
+From the repo root on the host:
+
+```bash
+ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d "$PWD"
+```
+
+Inside the first container shell:
+
+```bash
+./scripts/ops/run_vslam_demo.sh
+```
+
+From a second local desktop terminal on the host, attach again:
+
+```bash
+ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d "$PWD"
+```
+
+Inside the second container shell, do a quick GUI preflight and then start
+RViz manually:
+
+```bash
+xeyes
+glxinfo -B
+rviz2
+```
+
+This first pass intentionally uses plain `rviz2` without a GOAT-owned config so
+we can confirm basic container GUI function before tuning displays.
 
 ## Optional Debug Check
 If you want to confirm the preinstalled Isaac packages directly inside the
@@ -90,6 +128,9 @@ Quick spot checks:
 ros2 topic list | grep visual_slam
 ros2 topic echo /visual_slam/tracking/odometry --once
 ros2 pkg prefix isaac_ros_visual_slam
+which rviz2
+which xeyes
+which glxinfo
 ```
 
 ## Limits

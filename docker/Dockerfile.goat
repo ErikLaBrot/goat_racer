@@ -5,5 +5,9 @@ SHELL ["/bin/bash", "-c"]
 
 RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update && apt-get install -y \
+    mesa-utils \
+    ros-humble-rviz2 \
     ros-humble-isaac-ros-visual-slam \
+    x11-apps \
+    xauth \
     && rm -rf /var/lib/apt/lists/*

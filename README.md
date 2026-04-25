@@ -43,12 +43,14 @@ Normal iteration uses:
 `./scripts/dev/bootstrap.sh` is the host-only setup step. It syncs all root
 manifests on the host, copies the repo-root Isaac ROS config from
 `.isaac_ros_common-config` into
-`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config`, then uses the
+`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_common-config` and the
+repo-root upstream Docker args from `.isaac_ros_dev-dockerargs` into
+`ros_ws/src/isaac_ros_common/scripts/.isaac_ros_dev-dockerargs`, then uses the
 vendored upstream
 `ros_ws/src/isaac_ros_common/scripts/run_dev.sh -d <repo-root>` entrypoint to
 pull, build, or reuse the Isaac development container, including the repo-owned
-GOAT image overlay that adds Isaac ROS Visual SLAM, then prepare the workspace
-artifact directories.
+GOAT image overlay that adds Isaac ROS Visual SLAM and basic RViz desktop
+debugging tools, then prepare the workspace artifact directories.
 
 `./scripts/dev/build.sh` is container-aware. From the host it uses upstream
 `run_dev.sh` to run the internal build helper inside the Isaac container; from
@@ -61,6 +63,11 @@ is also container-aware: from the host it starts or reuses the Isaac container
 through the same upstream `run_dev.sh` entrypoint, and from inside the
 container it launches directly. In both cases it sources the built workspace
 and launches `goat_ros_launch/sensors.launch.py`.
+
+For manual desktop debugging from inside the container on a local Jetson
+session, attach with upstream `run_dev.sh`, launch the demo in one container
+shell, then attach again in a second shell and run `xeyes`, `glxinfo -B`, or
+`rviz2` directly.
 
 ## Layout
 
