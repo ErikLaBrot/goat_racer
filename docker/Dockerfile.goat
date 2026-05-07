@@ -1,0 +1,16 @@
+ARG BASE_IMAGE=ubuntu:22.04
+FROM ${BASE_IMAGE}
+
+SHELL ["/bin/bash", "-c"]
+
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && apt-get install -y \
+    mesa-utils \
+    ros-humble-rviz2 \
+    ros-humble-isaac-ros-visual-slam \
+    x11-apps \
+    xauth \
+    && echo "/opt/ros/humble/share/isaac_ros_gxf/gxf/lib/serialization" \
+      > /etc/ld.so.conf.d/isaac_ros_gxf_serialization.conf \
+    && ldconfig \
+    && rm -rf /var/lib/apt/lists/*

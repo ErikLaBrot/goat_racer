@@ -13,6 +13,7 @@ explicitly so they can be pinned later without guessing.
 | Isaac ROS apt lane | `release-3` / `release-3.0` |
 | JetPack / L4T lane | JetPack 6.x / L4T r36.x |
 | CUDA / TensorRT lane | Inherited from the selected base image and Isaac ROS lane; exact project pin TBD |
-| Default image key | `ros2_humble.realsense` |
-| Default Jetson base image | Upstream Isaac ROS RealSense image selected by `run_dev.sh` |
+| Default image key | `ros2_humble.realsense.goat` |
+| Default Jetson base image | Upstream Isaac ROS RealSense image plus the repo GOAT overlay selected by `run_dev.sh` |
+| Upstream Docker args file | Repo-owned `.isaac_ros_dev-dockerargs`, synced into vendored Isaac scripts during bootstrap |
 | Placeholder amd64 base image | Same upstream image flow, architecture override not yet the primary lane |

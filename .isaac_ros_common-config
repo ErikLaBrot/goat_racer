@@ -1,1 +1,2 @@
-CONFIG_IMAGE_KEY=ros2_humble.realsense
+CONFIG_IMAGE_KEY=ros2_humble.realsense.goat
+CONFIG_DOCKER_SEARCH_DIRS=(../../../../docker)

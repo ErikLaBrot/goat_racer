@@ -5,6 +5,7 @@
 !/ros_ws/bags/
 !/ros_ws/bags/README.md
 /ros_ws/src/goat_ros/
+/ros_ws/src/isaac_ros_common/
 /external/goat_vesc/
 /src/isaac_ros_common/
 /log/
